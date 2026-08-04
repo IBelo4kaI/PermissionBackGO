@@ -35,6 +35,9 @@ func (h *Handler) Login(c fiber.Ctx) error {
 		if errors.Is(err, ErrInvalidCredentials) {
 			return fiber.NewError(fiber.StatusNotFound, ErrInvalidCredentials.Error())
 		}
+		if errors.Is(err, ErrUserInactive) {
+			return fiber.NewError(fiber.StatusNotFound, ErrUserInactive.Error())
+		}
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
 

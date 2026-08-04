@@ -37,6 +37,10 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (LoginResult, err
 		return LoginResult{}, ErrInvalidCredentials
 	}
 
+	if user.Status != repo.UsersStatusActive {
+		return LoginResult{}, ErrUserInactive
+	}
+
 	rawToken, err := token.Generate()
 	if err != nil {
 		return LoginResult{}, err

@@ -6,6 +6,9 @@ import (
 	repo "permisson/internal/database/sqlc"
 	"time"
 
+	ftonic "github.com/TickLabVN/tonic/adapters/fiber"
+	"github.com/TickLabVN/tonic/core"
+	"github.com/TickLabVN/tonic/core/docs"
 	"github.com/charmbracelet/log"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -35,7 +38,7 @@ func (app *application) mount() *fiber.App {
 	fiberApp := fiber.New(fiber.Config{})
 
 	fiberApp.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://192.168.88.147:5173", "http://localhost:5173", "http://localhost:8080", "http://192.168.88.147:5176", "http://192.168.88.147:8080"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:8080"},
 		AllowCredentials: true,
 	}))
 
@@ -43,15 +46,20 @@ func (app *application) mount() *fiber.App {
 		Format: "${time} | [${ip}]:${port} | ${latency} | ${status} - ${method} ${path} \n",
 	}))
 
-	v1 := fiberApp.Group("api/mag/v1")
-
-	v1.Get("/test", func(c fiber.Ctx) error {
-		return c.JSON(fiber.Map{"message": "success"})
+	schema := ftonic.New(&docs.OpenApi{
+		OpenAPI: docs.VERSION,
+		Info: docs.InfoObject{
+			Title: "Сервис аутентификации и контроля разрешений",
+		},
 	})
+
+	v1 := fiberApp.Group("/api/as")
 
 	authService := auth.NewService(repo.New(app.db), time.Hour*4)
 	authHandler := auth.NewHandler(authService, app.config.appEnv == "production", app.config.cookieDomain)
-	auth.RegisterRoutes(v1, authHandler)
+	auth.RegisterRoutes(v1, authHandler, schema)
+
+	schema.UIHandle(fiberApp, "/docs", core.SwaggerUI)
 
 	return fiberApp
 }

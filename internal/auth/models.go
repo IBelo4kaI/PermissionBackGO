@@ -2,19 +2,19 @@ package auth
 
 import "time"
 
-// LoginRequest — аналог pydantic-модели Login (login, password).
+// LoginRequest describes user credentials.
 type LoginRequest struct {
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	Login    string `json:"login" validate:"required,min=3,max=100" example:"admin" description:"User email"`
+	Password string `json:"password" validate:"required,min=8,max=255" example:"P@ssw0rd123" description:"User password"`
 }
 
-// LoginResult — то, что раньше возвращалось из AuthService.login() как tuple (token, expires_at).
+// LoginResponse describes successful authentication.
 type LoginResult struct {
-	Token     string
-	ExpiresAt time.Time
+	Token     string    `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	ExpiresAt time.Time `json:"expires_at" format:"date-time" description:"Token expiration time"`
 }
 
-// ValidateSessionResponse — аналог {"valid": bool} из /auth/validate-session.
+// ValidateSessionResponse indicates whether the session is valid.
 type ValidateSessionResponse struct {
-	Valid bool `json:"valid"`
+	Valid bool `json:"valid" example:"true" description:"Whether the provided session is valid"`
 }

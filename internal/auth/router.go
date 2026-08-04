@@ -1,9 +1,27 @@
 package auth
 
-import "github.com/gofiber/fiber/v3"
+import (
+	middlewares "permisson/internal/middleware"
 
-func RegisterRoutes(router fiber.Router, h *Handler) {
+	ftonic "github.com/TickLabVN/tonic/adapters/fiber"
+	"github.com/TickLabVN/tonic/core/docs"
+	"github.com/gofiber/fiber/v3"
+)
+
+func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 	group := router.Group("/auth")
-	group.Post("/login", h.Login)
-	group.Post("/validate-session", h.ValidateSession)
+	// group.Post("/login", h.Login)
+	// group.Post("/validate-session", h.ValidateSession)
+
+	ftonic.For[LoginRequest, LoginResult](schema).
+		POST(group, "/login", middlewares.Bind[LoginRequest], h.Login, ftonic.WithOperation(docs.OperationObject{
+			Summary: "Авторизация в системе",
+			Tags:    []string{"Авторизация"},
+		}))
+
+	ftonic.For[any, ValidateSessionResponse](schema).
+		POST(group, "/validate-session", h.ValidateSession, ftonic.WithOperation(docs.OperationObject{
+			Summary: "Проверка токена на валидность",
+			Tags:    []string{"Авторизация"},
+		}))
 }

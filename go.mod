@@ -1,6 +1,6 @@
 module permisson
 
-go 1.26.1
+go 1.26.4
 
 require (
 	github.com/charmbracelet/log v1.0.0
@@ -12,7 +12,16 @@ require (
 )
 
 require (
+	github.com/TickLabVN/tonic/core v0.0.0-20260618162451-63208648c397 // indirect
+	github.com/gabriel-vasile/mimetype v1.4.13 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/leodido/go-urn v1.4.0 // indirect
+)
+
+require (
 	filippo.io/edwards25519 v1.2.0 // indirect
+	github.com/TickLabVN/tonic/adapters/fiber v0.0.0-20260706023527-3520c3206b0b
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect
@@ -21,6 +30,7 @@ require (
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
+	github.com/go-playground/validator/v10 v10.30.3
 	github.com/gofiber/schema v1.8.0 // indirect
 	github.com/gofiber/utils/v2 v2.1.1 // indirect
 	github.com/klauspost/compress v1.19.0 // indirect
