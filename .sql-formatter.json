@@ -1,0 +1,10 @@
+{
+   "language": "mysql",
+   "keywordCase": "upper",
+   "identifierCase": "lower",
+   "tabWidth": 4,
+   "useTabs": true,
+   "expressionWidth": 120,
+   "linesBetweenQueries": 1,
+   "denseOperators": false
+}
