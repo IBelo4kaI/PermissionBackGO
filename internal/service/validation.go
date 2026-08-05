@@ -1,7 +1,5 @@
 package service
 
-// Validate — аналог ограничений pydantic ServiceBase
-// (name: max_length=100, prefix: max_length=5).
 func (r UpsertRequest) Validate() error {
 	if r.Name == "" {
 		return ErrNameRequired

@@ -12,9 +12,10 @@ import (
 )
 
 const addRoleToUser = `-- name: AddRoleToUser :exec
-
-INSERT INTO user_roles (user_id, role_id)
-VALUES (?, ?)
+INSERT INTO
+	user_roles (user_id, role_id)
+VALUES
+	(?, ?)
 `
 
 type AddRoleToUserParams struct {
@@ -22,15 +23,16 @@ type AddRoleToUserParams struct {
 	RoleID string `json:"roleId"`
 }
 
-// user_roles (junction table) -------------------------------------------------
 func (q *Queries) AddRoleToUser(ctx context.Context, arg AddRoleToUserParams) error {
 	_, err := q.db.ExecContext(ctx, addRoleToUser, arg.UserID, arg.RoleID)
 	return err
 }
 
 const countUsers = `-- name: CountUsers :one
-SELECT COUNT(*) AS total
-FROM users
+SELECT
+	COUNT(*) AS total
+FROM
+	users
 `
 
 func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
@@ -41,11 +43,14 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const countUsersByServiceID = `-- name: CountUsersByServiceID :one
-SELECT COUNT(DISTINCT u.id) AS total
-FROM users u
-JOIN user_roles ur ON ur.user_id = u.id
-JOIN roles r ON r.id = ur.role_id
-WHERE r.service_id = ?
+SELECT
+	COUNT(DISTINCT u.id) AS total
+FROM
+	users u
+	JOIN user_roles ur ON ur.user_id = u.id
+	JOIN roles r ON r.id = ur.role_id
+WHERE
+	r.service_id = ?
 `
 
 func (q *Queries) CountUsersByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error) {
@@ -56,8 +61,10 @@ func (q *Queries) CountUsersByServiceID(ctx context.Context, serviceID sql.NullS
 }
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+INSERT INTO
+	users (id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at)
+VALUES
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type CreateUserParams struct {
@@ -89,7 +96,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 
 const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users
-WHERE id = ?
+WHERE
+	id = ?
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id string) error {
@@ -98,9 +106,21 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at
-FROM users
-WHERE id = ?
+SELECT
+	id,
+	name,
+	surname,
+	patronymic,
+	username,
+	gender_id,
+	birthday,
+	password,
+	status,
+	created_at
+FROM
+	users
+WHERE
+	id = ?
 `
 
 type GetUserByIDRow struct {
@@ -135,9 +155,21 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at
-FROM users
-WHERE username = ?
+SELECT
+	id,
+	name,
+	surname,
+	patronymic,
+	username,
+	gender_id,
+	birthday,
+	password,
+	status,
+	created_at
+FROM
+	users
+WHERE
+	username = ?
 `
 
 type GetUserByUsernameRow struct {
@@ -172,9 +204,21 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 }
 
 const listAllUsers = `-- name: ListAllUsers :many
-SELECT id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at
-FROM users
-ORDER BY created_at DESC
+SELECT
+	id,
+	name,
+	surname,
+	patronymic,
+	username,
+	gender_id,
+	birthday,
+	password,
+	status,
+	created_at
+FROM
+	users
+ORDER BY
+	created_at DESC
 `
 
 type ListAllUsersRow struct {
@@ -225,10 +269,18 @@ func (q *Queries) ListAllUsers(ctx context.Context) ([]ListAllUsersRow, error) {
 }
 
 const listRolesForUser = `-- name: ListRolesForUser :many
-SELECT r.id, r.service_id, r.name, r.description, r.is_global, r.created_at
-FROM roles r
-JOIN user_roles ur ON ur.role_id = r.id
-WHERE ur.user_id = ?
+SELECT
+	r.id,
+	r.service_id,
+	r.name,
+	r.description,
+	r.is_global,
+	r.created_at
+FROM
+	roles r
+	JOIN user_roles ur ON ur.role_id = r.id
+WHERE
+	ur.user_id = ?
 `
 
 func (q *Queries) ListRolesForUser(ctx context.Context, userID string) ([]Role, error) {
@@ -262,10 +314,25 @@ func (q *Queries) ListRolesForUser(ctx context.Context, userID string) ([]Role, 
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at
-FROM users
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+SELECT
+	id,
+	name,
+	surname,
+	patronymic,
+	username,
+	gender_id,
+	birthday,
+	password,
+	status,
+	created_at
+FROM
+	users
+ORDER BY
+	created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListUsersParams struct {
@@ -321,13 +388,29 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 }
 
 const listUsersByServiceID = `-- name: ListUsersByServiceID :many
-SELECT DISTINCT u.id, u.name, u.surname, u.patronymic, u.username, u.gender_id, u.birthday, u.password, u.status, u.created_at
-FROM users u
-JOIN user_roles ur ON ur.user_id = u.id
-JOIN roles r ON r.id = ur.role_id
-WHERE r.service_id = ?
-ORDER BY u.created_at DESC
-LIMIT ? OFFSET ?
+SELECT DISTINCT
+	u.id,
+	u.name,
+	u.surname,
+	u.patronymic,
+	u.username,
+	u.gender_id,
+	u.birthday,
+	u.password,
+	u.status,
+	u.created_at
+FROM
+	users u
+	JOIN user_roles ur ON ur.user_id = u.id
+	JOIN roles r ON r.id = ur.role_id
+WHERE
+	r.service_id = ?
+ORDER BY
+	u.created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListUsersByServiceIDParams struct {
@@ -385,7 +468,9 @@ func (q *Queries) ListUsersByServiceID(ctx context.Context, arg ListUsersByServi
 
 const removeRoleFromUser = `-- name: RemoveRoleFromUser :exec
 DELETE FROM user_roles
-WHERE user_id = ? AND role_id = ?
+WHERE
+	user_id = ?
+	AND role_id = ?
 `
 
 type RemoveRoleFromUserParams struct {
@@ -400,15 +485,17 @@ func (q *Queries) RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUser
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-SET name        = COALESCE(?, name),
-    surname     = COALESCE(?, surname),
-    patronymic  = COALESCE(?, patronymic),
-    username    = COALESCE(?, username),
-    birthday    = COALESCE(?, birthday),
-    status      = COALESCE(?, status),
-    gender_id   = COALESCE(?, gender_id),
-    password    = COALESCE(?, password)
-WHERE id = ?
+SET
+	name = COALESCE(?, name),
+	surname = COALESCE(?, surname),
+	patronymic = COALESCE(?, patronymic),
+	username = COALESCE(?, username),
+	birthday = COALESCE(?, birthday),
+	status = COALESCE(?, status),
+	gender_id = COALESCE(?, gender_id),
+	password = COALESCE(?, password)
+WHERE
+	id = ?
 `
 
 type UpdateUserParams struct {

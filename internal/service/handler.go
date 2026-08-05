@@ -18,7 +18,6 @@ func NewHandler(service *Service, authService *auth.Service) *Handler {
 	return &Handler{service: service, auth: authService}
 }
 
-// List — GET /services. Аналог service_routers.get_all.
 func (h *Handler) List(c fiber.Ctx) error {
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 10)
@@ -30,7 +29,6 @@ func (h *Handler) List(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// Create — POST /services/create. Аналог service_routers.create.
 func (h *Handler) Create(c fiber.Ctx) error {
 	var req UpsertRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -47,7 +45,6 @@ func (h *Handler) Create(c fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(svc)
 }
 
-// Update — PUT /services/:service_id. Аналог service_routers.update.
 func (h *Handler) Update(c fiber.Ctx) error {
 	id := c.Params("service_id")
 
@@ -69,10 +66,8 @@ func (h *Handler) Update(c fiber.Ctx) error {
 	return c.JSON(svc)
 }
 
-// ListUserAccessible — GET /services/user-accessible. Аналог
-// get_user_accessible_services: требует ТОЛЬКО пользовательскую сессию
-// (Depends(get_session)), в отличие от остальных роутов сущности, которые
-// в Python защищены require_permission.
+// Требует только пользовательскую сессию (не API-ключ), в отличие от
+// остальных роутов сущности.
 func (h *Handler) ListUserAccessible(c fiber.Ctx) error {
 	sessionToken := c.Cookies("session")
 
@@ -88,7 +83,6 @@ func (h *Handler) ListUserAccessible(c fiber.Ctx) error {
 	return c.JSON(items)
 }
 
-// IssueAPIKey — POST /services/:service_id/api-key. Аналог issue_api_key.
 func (h *Handler) IssueAPIKey(c fiber.Ctx) error {
 	id := c.Params("service_id")
 
@@ -102,7 +96,6 @@ func (h *Handler) IssueAPIKey(c fiber.Ctx) error {
 	return c.JSON(key)
 }
 
-// RevokeAPIKey — DELETE /services/:service_id/api-key. Аналог revoke_api_key.
 func (h *Handler) RevokeAPIKey(c fiber.Ctx) error {
 	id := c.Params("service_id")
 

@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// ── String ──────────────────────────────────────────────────
-
 // String converts a plain string into sql.NullString.
 // Empty string is treated as NULL — use StringPtr if empty-but-valid
 // needs to be preserved.
@@ -35,15 +33,12 @@ func StringOrNil(ns sql.NullString) *string {
 	return &ns.String
 }
 
-// StringOr returns ns.String if valid, otherwise fallback.
 func StringOr(ns sql.NullString, fallback string) string {
 	if !ns.Valid {
 		return fallback
 	}
 	return ns.String
 }
-
-// ── Time ────────────────────────────────────────────────────
 
 func Time(t time.Time) sql.NullTime {
 	return sql.NullTime{Time: t, Valid: !t.IsZero()}
@@ -63,8 +58,6 @@ func TimeOrNil(nt sql.NullTime) *time.Time {
 	return &nt.Time
 }
 
-// ── Bool ────────────────────────────────────────────────────
-
 func Bool(b bool) sql.NullBool {
 	return sql.NullBool{Bool: b, Valid: true}
 }
@@ -82,8 +75,6 @@ func BoolOrNil(nb sql.NullBool) *bool {
 	}
 	return &nb.Bool
 }
-
-// ── Int32 / Int64 ───────────────────────────────────────────
 
 func Int32(i int32) sql.NullInt32 {
 	return sql.NullInt32{Int32: i, Valid: true}

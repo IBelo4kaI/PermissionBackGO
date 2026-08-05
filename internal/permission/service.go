@@ -53,7 +53,6 @@ func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Per
 	}, nil
 }
 
-// ListByServiceID — аналог PermissionService.get_all_by_service_id.
 func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) ([]Permission, error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
@@ -74,7 +73,6 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 	return items, nil
 }
 
-// GetByID — аналог PermissionService.get_by_id.
 func (s *Service) GetByID(ctx context.Context, id string) (Permission, error) {
 	row, err := s.queries.GetPermissionByID(ctx, id)
 	if err != nil {
@@ -86,7 +84,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (Permission, error) {
 	return fromGetByIDRow(row), nil
 }
 
-// GetByCode — аналог PermissionService.get_by_code.
 func (s *Service) GetByCode(ctx context.Context, code string) (Permission, error) {
 	row, err := s.queries.GetPermissionByCode(ctx, code)
 	if err != nil {
@@ -98,8 +95,7 @@ func (s *Service) GetByCode(ctx context.Context, code string) (Permission, error
 	return fromGetByCodeRow(row), nil
 }
 
-// ListForUser — аналог PermissionRepository.get_by_user_id (используется другими
-// сущностями, например user/role, поэтому не привязан к своему HTTP-роуту).
+// Используется другими сущностями (например, role), поэтому не привязан к HTTP-роуту.
 func (s *Service) ListForUser(ctx context.Context, userID string) ([]Permission, error) {
 	rows, err := s.queries.ListPermissionsByUserID(ctx, userID)
 	if err != nil {
@@ -112,7 +108,6 @@ func (s *Service) ListForUser(ctx context.Context, userID string) ([]Permission,
 	return items, nil
 }
 
-// ListForUserAndService — аналог PermissionService.get_by_user_id_and_service_id.
 // serviceName нужен отдельно от serviceID, т.к. wildcard-коды матчатся по имени
 // сервиса ("shop:all:all"), а не по его ID — вызывающая сторона (например, middleware)
 // должна сама подтянуть имя сервиса перед вызовом.
@@ -132,8 +127,7 @@ func (s *Service) ListForUserAndService(ctx context.Context, userID, serviceID, 
 	return items, nil
 }
 
-// ExistsForUser — аналог PermissionRepository.exist_by_user_id, основа для
-// будущего middleware.RequirePermission(entity, action).
+// Основа для будущего middleware.RequirePermission(entity, action).
 func (s *Service) ExistsForUser(ctx context.Context, userID, service, entity, action string) (bool, error) {
 	return s.queries.ExistsUserPermission(ctx, repo.ExistsUserPermissionParams{
 		UserID:  userID,
@@ -143,7 +137,6 @@ func (s *Service) ExistsForUser(ctx context.Context, userID, service, entity, ac
 	})
 }
 
-// Create — аналог PermissionService.create.
 func (s *Service) Create(ctx context.Context, req UpsertRequest) (Permission, error) {
 	if err := s.ensureCodeIsFree(ctx, req.Code, ""); err != nil {
 		return Permission{}, err
@@ -164,7 +157,6 @@ func (s *Service) Create(ctx context.Context, req UpsertRequest) (Permission, er
 	return s.GetByID(ctx, id)
 }
 
-// Update — аналог PermissionService.update.
 func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (Permission, error) {
 	existing, err := s.GetByID(ctx, id)
 	if err != nil {
@@ -191,7 +183,6 @@ func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (Per
 	return s.GetByID(ctx, id)
 }
 
-// Delete — аналог PermissionService.delete.
 func (s *Service) Delete(ctx context.Context, id string) error {
 	if _, err := s.GetByID(ctx, id); err != nil {
 		return err

@@ -8,10 +8,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// RegisterRoutes — аналог roles_router = APIRouter(prefix="/roles", tags=["Roles"]).
-//
-// Как и в остальных сущностях, require_permission пока не подключён — роуты
-// работают, но без проверки прав до появления middleware.RequirePermission.
+// require_permission пока не подключён — роуты работают без проверки прав
+// до появления middleware.RequirePermission.
 func RegisterRoutes(router fiber.Router, schema *ftonic.Adapter, h *Handler) {
 	group := router.Group("/roles")
 

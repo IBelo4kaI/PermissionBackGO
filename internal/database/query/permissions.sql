@@ -83,7 +83,6 @@ WHERE
 	service_id = ?;
 
 -- name: ListPermissionsByUserID :many
--- Все разрешения, доступные пользователю через все его роли.
 SELECT DISTINCT
 	p.id,
 	p.service_id,
@@ -151,7 +150,6 @@ SELECT
 	) AS has_permission;
 
 -- name: ListAllPermissions :many
--- Без пагинации: используется при сборе информации о глобальной роли (позже, в role-сущности).
 SELECT
 	p.id,
 	p.service_id,
@@ -165,7 +163,6 @@ FROM
 	LEFT JOIN services s ON s.id = p.service_id;
 
 -- name: ListAllPermissionsByServiceID :many
--- Без пагинации: используется при сборе информации о роли, привязанной к сервису.
 SELECT
 	p.id,
 	p.service_id,

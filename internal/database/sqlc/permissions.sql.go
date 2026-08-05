@@ -242,7 +242,6 @@ type ListAllPermissionsRow struct {
 	ServiceName sql.NullString `json:"serviceName"`
 }
 
-// Без пагинации: используется при сборе информации о глобальной роли (позже, в role-сущности).
 func (q *Queries) ListAllPermissions(ctx context.Context) ([]ListAllPermissionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listAllPermissions)
 	if err != nil {
@@ -300,7 +299,6 @@ type ListAllPermissionsByServiceIDRow struct {
 	ServiceName sql.NullString `json:"serviceName"`
 }
 
-// Без пагинации: используется при сборе информации о роли, привязанной к сервису.
 func (q *Queries) ListAllPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) ([]ListAllPermissionsByServiceIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listAllPermissionsByServiceID, serviceID)
 	if err != nil {
@@ -483,7 +481,6 @@ WHERE
 	ur.user_id = ?
 `
 
-// Все разрешения, доступные пользователю через все его роли.
 func (q *Queries) ListPermissionsByUserID(ctx context.Context, userID string) ([]Permission, error) {
 	rows, err := q.db.QueryContext(ctx, listPermissionsByUserID, userID)
 	if err != nil {

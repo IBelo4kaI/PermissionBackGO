@@ -8,9 +8,8 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// RegisterRoutes — аналог service_router = APIRouter(prefix="/services", tags=["Services"]).
-// Как и в permission-сущности, require_permission пока не подключён — роуты
-// работают, но без проверки прав до появления middleware.RequirePermission.
+// require_permission пока не подключён — роуты работают без проверки прав
+// до появления middleware.RequirePermission.
 func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 	group := router.Group("/services")
 

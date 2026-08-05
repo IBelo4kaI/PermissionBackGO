@@ -2,12 +2,10 @@ package service
 
 import "time"
 
-// ServiceResponse — аналог pydantic ServiceResponse. api_key_hash сознательно
-// не входит в структуру — наружу он никогда не отдаётся.
+// api_key_hash намеренно не входит в структуру — наружу он не отдаётся.
 //
-// Name и ServiceName дублируют друг друга намеренно: в Python ServiceResponse
-// объявляет service_name как alias="name" поверх унаследованного поля name,
-// поэтому в JSON-ответе всегда были оба ключа с одинаковым значением.
+// Name и ServiceName дублируют друг друга намеренно: в JSON-ответе всегда
+// присутствуют оба ключа с одинаковым значением (сохранено из Python-версии).
 type ServiceResponse struct {
 	ID               string    `json:"id"`
 	Name             string    `json:"name"`
@@ -21,8 +19,6 @@ type ServiceResponse struct {
 	PermissionsCount int       `json:"permissions_count"`
 }
 
-// UpsertRequest — аналог ServiceCreate, используется и для создания, и для
-// редактирования сервиса (Python переиспользует одну и ту же модель).
 type UpsertRequest struct {
 	Name        string  `json:"name"`
 	Description string  `json:"description"`
@@ -32,14 +28,13 @@ type UpsertRequest struct {
 	Prefix      string  `json:"prefix"`
 }
 
-// APIKeyResponse — аналог ServiceApiKeyResponse. api_key отдаётся ровно один
-// раз, в момент выпуска/перевыпуска — дальше в базе хранится только его хэш.
+// api_key отдаётся ровно один раз, при выпуске/перевыпуске — дальше в БД
+// хранится только его хэш.
 type APIKeyResponse struct {
 	ServiceID string `json:"service_id"`
 	APIKey    string `json:"api_key"`
 }
 
-// AccessResponse — аналог ServiceAccessResponse (для /services/user-accessible).
 type AccessResponse struct {
 	ID          string  `json:"id"`
 	Name        string  `json:"name"`
@@ -49,7 +44,6 @@ type AccessResponse struct {
 	Theme       *string `json:"theme,omitempty"`
 }
 
-// ListResponse — аналог PageResponse[ServiceResponse].
 type ListResponse struct {
 	Items []ServiceResponse `json:"items"`
 	Total int64             `json:"total"`

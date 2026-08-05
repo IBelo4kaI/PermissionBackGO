@@ -12,9 +12,10 @@ import (
 )
 
 const addPermissionToRole = `-- name: AddPermissionToRole :exec
-
-INSERT INTO role_permissions (role_id, permission_id, granted_at)
-VALUES (?, ?, NOW())
+INSERT INTO
+	role_permissions (role_id, permission_id, granted_at)
+VALUES
+	(?, ?, NOW())
 `
 
 type AddPermissionToRoleParams struct {
@@ -22,15 +23,16 @@ type AddPermissionToRoleParams struct {
 	PermissionID string `json:"permissionId"`
 }
 
-// role_permissions (junction table) -----------------------------------------
 func (q *Queries) AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error {
 	_, err := q.db.ExecContext(ctx, addPermissionToRole, arg.RoleID, arg.PermissionID)
 	return err
 }
 
 const countRoles = `-- name: CountRoles :one
-SELECT COUNT(*) AS total
-FROM roles
+SELECT
+	COUNT(*) AS total
+FROM
+	roles
 `
 
 func (q *Queries) CountRoles(ctx context.Context) (int64, error) {
@@ -41,9 +43,12 @@ func (q *Queries) CountRoles(ctx context.Context) (int64, error) {
 }
 
 const countRolesByServiceID = `-- name: CountRolesByServiceID :one
-SELECT COUNT(*) AS total
-FROM roles
-WHERE service_id = ?
+SELECT
+	COUNT(*) AS total
+FROM
+	roles
+WHERE
+	service_id = ?
 `
 
 func (q *Queries) CountRolesByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error) {
@@ -54,8 +59,10 @@ func (q *Queries) CountRolesByServiceID(ctx context.Context, serviceID sql.NullS
 }
 
 const createRole = `-- name: CreateRole :exec
-INSERT INTO roles (id, service_id, name, description, is_global, created_at)
-VALUES (?, ?, ?, ?, ?, NOW())
+INSERT INTO
+	roles (id, service_id, name, description, is_global, created_at)
+VALUES
+	(?, ?, ?, ?, ?, NOW())
 `
 
 type CreateRoleParams struct {
@@ -79,7 +86,8 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) error {
 
 const deleteRole = `-- name: DeleteRole :exec
 DELETE FROM roles
-WHERE id = ?
+WHERE
+	id = ?
 `
 
 func (q *Queries) DeleteRole(ctx context.Context, id string) error {
@@ -88,9 +96,17 @@ func (q *Queries) DeleteRole(ctx context.Context, id string) error {
 }
 
 const getRoleByID = `-- name: GetRoleByID :one
-SELECT id, service_id, name, description, is_global, created_at
-FROM roles
-WHERE id = ?
+SELECT
+	id,
+	service_id,
+	name,
+	description,
+	is_global,
+	created_at
+FROM
+	roles
+WHERE
+	id = ?
 `
 
 func (q *Queries) GetRoleByID(ctx context.Context, id string) (Role, error) {
@@ -108,11 +124,20 @@ func (q *Queries) GetRoleByID(ctx context.Context, id string) (Role, error) {
 }
 
 const listPermissionsForRole = `-- name: ListPermissionsForRole :many
-SELECT p.id, p.service_id, p.code, p.name, p.description, p.created_at, s.name AS service_name
-FROM permissions p
-JOIN role_permissions rp ON rp.permission_id = p.id
-LEFT JOIN services s ON s.id = p.service_id
-WHERE rp.role_id = ?
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	JOIN role_permissions rp ON rp.permission_id = p.id
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	rp.role_id = ?
 `
 
 type ListPermissionsForRoleRow struct {
@@ -125,7 +150,6 @@ type ListPermissionsForRoleRow struct {
 	ServiceName sql.NullString `json:"serviceName"`
 }
 
-// Разрешения роли вместе с именем владеющего сервиса (аналог joinedload Role.permissions.service).
 func (q *Queries) ListPermissionsForRole(ctx context.Context, roleID string) ([]ListPermissionsForRoleRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPermissionsForRole, roleID)
 	if err != nil {
@@ -158,10 +182,21 @@ func (q *Queries) ListPermissionsForRole(ctx context.Context, roleID string) ([]
 }
 
 const listRoles = `-- name: ListRoles :many
-SELECT id, service_id, name, description, is_global, created_at
-FROM roles
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+SELECT
+	id,
+	service_id,
+	name,
+	description,
+	is_global,
+	created_at
+FROM
+	roles
+ORDER BY
+	created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListRolesParams struct {
@@ -200,11 +235,23 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, e
 }
 
 const listRolesByServiceID = `-- name: ListRolesByServiceID :many
-SELECT id, service_id, name, description, is_global, created_at
-FROM roles
-WHERE service_id = ?
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+SELECT
+	id,
+	service_id,
+	name,
+	description,
+	is_global,
+	created_at
+FROM
+	roles
+WHERE
+	service_id = ?
+ORDER BY
+	created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListRolesByServiceIDParams struct {
@@ -245,22 +292,40 @@ func (q *Queries) ListRolesByServiceID(ctx context.Context, arg ListRolesByServi
 
 const listRolesWithCounts = `-- name: ListRolesWithCounts :many
 SELECT
-    r.id, r.service_id, r.name, r.description, r.is_global, r.created_at,
-    COALESCE(uc.user_count, 0)       AS user_count,
-    COALESCE(pc.permission_count, 0) AS permission_count
-FROM roles r
-LEFT JOIN (
-    SELECT role_id, COUNT(user_id) AS user_count
-    FROM user_roles
-    GROUP BY role_id
-) uc ON uc.role_id = r.id
-LEFT JOIN (
-    SELECT role_id, COUNT(permission_id) AS permission_count
-    FROM role_permissions
-    GROUP BY role_id
-) pc ON pc.role_id = r.id
-ORDER BY r.created_at DESC
-LIMIT ? OFFSET ?
+	r.id,
+	r.service_id,
+	r.name,
+	r.description,
+	r.is_global,
+	r.created_at,
+	COALESCE(uc.user_count, 0) AS user_count,
+	COALESCE(pc.permission_count, 0) AS permission_count
+FROM
+	roles r
+	LEFT JOIN (
+		SELECT
+			role_id,
+			COUNT(user_id) AS user_count
+		FROM
+			user_roles
+		GROUP BY
+			role_id
+	) uc ON uc.role_id = r.id
+	LEFT JOIN (
+		SELECT
+			role_id,
+			COUNT(permission_id) AS permission_count
+		FROM
+			role_permissions
+		GROUP BY
+			role_id
+	) pc ON pc.role_id = r.id
+ORDER BY
+	r.created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListRolesWithCountsParams struct {
@@ -279,7 +344,6 @@ type ListRolesWithCountsRow struct {
 	PermissionCount int64          `json:"permissionCount"`
 }
 
-// Роли с количеством пользователей и разрешений (без фильтра по сервису).
 func (q *Queries) ListRolesWithCounts(ctx context.Context, arg ListRolesWithCountsParams) ([]ListRolesWithCountsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listRolesWithCounts, arg.Limit, arg.Offset)
 	if err != nil {
@@ -314,23 +378,42 @@ func (q *Queries) ListRolesWithCounts(ctx context.Context, arg ListRolesWithCoun
 
 const listRolesWithCountsByServiceID = `-- name: ListRolesWithCountsByServiceID :many
 SELECT
-    r.id, r.service_id, r.name, r.description, r.is_global, r.created_at,
-    COALESCE(uc.user_count, 0)       AS user_count,
-    COALESCE(pc.permission_count, 0) AS permission_count
-FROM roles r
-LEFT JOIN (
-    SELECT role_id, COUNT(user_id) AS user_count
-    FROM user_roles
-    GROUP BY role_id
-) uc ON uc.role_id = r.id
-LEFT JOIN (
-    SELECT role_id, COUNT(permission_id) AS permission_count
-    FROM role_permissions
-    GROUP BY role_id
-) pc ON pc.role_id = r.id
-WHERE r.service_id = ?
-ORDER BY r.created_at DESC
-LIMIT ? OFFSET ?
+	r.id,
+	r.service_id,
+	r.name,
+	r.description,
+	r.is_global,
+	r.created_at,
+	COALESCE(uc.user_count, 0) AS user_count,
+	COALESCE(pc.permission_count, 0) AS permission_count
+FROM
+	roles r
+	LEFT JOIN (
+		SELECT
+			role_id,
+			COUNT(user_id) AS user_count
+		FROM
+			user_roles
+		GROUP BY
+			role_id
+	) uc ON uc.role_id = r.id
+	LEFT JOIN (
+		SELECT
+			role_id,
+			COUNT(permission_id) AS permission_count
+		FROM
+			role_permissions
+		GROUP BY
+			role_id
+	) pc ON pc.role_id = r.id
+WHERE
+	r.service_id = ?
+ORDER BY
+	r.created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListRolesWithCountsByServiceIDParams struct {
@@ -350,7 +433,6 @@ type ListRolesWithCountsByServiceIDRow struct {
 	PermissionCount int64          `json:"permissionCount"`
 }
 
-// То же самое, но отфильтровано по service_id.
 func (q *Queries) ListRolesWithCountsByServiceID(ctx context.Context, arg ListRolesWithCountsByServiceIDParams) ([]ListRolesWithCountsByServiceIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listRolesWithCountsByServiceID, arg.ServiceID, arg.Limit, arg.Offset)
 	if err != nil {
@@ -384,9 +466,12 @@ func (q *Queries) ListRolesWithCountsByServiceID(ctx context.Context, arg ListRo
 }
 
 const listUsedPermissionIDsForRole = `-- name: ListUsedPermissionIDsForRole :many
-SELECT permission_id
-FROM role_permissions
-WHERE role_id = ?
+SELECT
+	permission_id
+FROM
+	role_permissions
+WHERE
+	role_id = ?
 `
 
 func (q *Queries) ListUsedPermissionIDsForRole(ctx context.Context, roleID string) ([]string, error) {
@@ -413,10 +498,21 @@ func (q *Queries) ListUsedPermissionIDsForRole(ctx context.Context, roleID strin
 }
 
 const listUsersWithRole = `-- name: ListUsersWithRole :many
-SELECT u.id, u.name, u.surname, u.patronymic, u.username, u.gender_id, u.birthday, u.status, u.created_at
-FROM users u
-JOIN user_roles ur ON ur.user_id = u.id
-WHERE ur.role_id = ?
+SELECT
+	u.id,
+	u.name,
+	u.surname,
+	u.patronymic,
+	u.username,
+	u.gender_id,
+	u.birthday,
+	u.status,
+	u.created_at
+FROM
+	users u
+	JOIN user_roles ur ON ur.user_id = u.id
+WHERE
+	ur.role_id = ?
 `
 
 type ListUsersWithRoleRow struct {
@@ -466,7 +562,9 @@ func (q *Queries) ListUsersWithRole(ctx context.Context, roleID string) ([]ListU
 
 const removePermissionFromRole = `-- name: RemovePermissionFromRole :exec
 DELETE FROM role_permissions
-WHERE role_id = ? AND permission_id = ?
+WHERE
+	role_id = ?
+	AND permission_id = ?
 `
 
 type RemovePermissionFromRoleParams struct {
@@ -481,11 +579,13 @@ func (q *Queries) RemovePermissionFromRole(ctx context.Context, arg RemovePermis
 
 const updateRole = `-- name: UpdateRole :exec
 UPDATE roles
-SET service_id  = ?,
-    name        = ?,
-    description = ?,
-    is_global   = ?
-WHERE id = ?
+SET
+	service_id = ?,
+	name = ?,
+	description = ?,
+	is_global = ?
+WHERE
+	id = ?
 `
 
 type UpdateRoleParams struct {

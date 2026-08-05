@@ -10,9 +10,7 @@ import (
 )
 
 type Querier interface {
-	// role_permissions (junction table) -----------------------------------------
 	AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error
-	// user_roles (junction table) -------------------------------------------------
 	AddRoleToUser(ctx context.Context, arg AddRoleToUserParams) error
 	CountPermissions(ctx context.Context) (int64, error)
 	CountPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error)
@@ -48,28 +46,22 @@ type Querier interface {
 	GetSessionByTokenHash(ctx context.Context, tokenHash string) (GetSessionByTokenHashRow, error)
 	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
 	GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error)
-	// Без пагинации: используется при сборе информации о глобальной роли (позже, в role-сущности).
 	ListAllPermissions(ctx context.Context) ([]ListAllPermissionsRow, error)
-	// Без пагинации: используется при сборе информации о роли, привязанной к сервису.
 	ListAllPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) ([]ListAllPermissionsByServiceIDRow, error)
 	ListAllUsers(ctx context.Context) ([]ListAllUsersRow, error)
 	ListGenders(ctx context.Context) ([]Gender, error)
 	ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]ListPermissionsRow, error)
 	ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]ListPermissionsByServiceIDRow, error)
-	// Все разрешения, доступные пользователю через все его роли.
 	ListPermissionsByUserID(ctx context.Context, userID string) ([]Permission, error)
 	// Разрешения пользователя для конкретного сервиса с учётом wildcard-кодов
 	// вида "all:all:all" и "<service_name>:all:all". sqlc.arg + CAST(...AS CHAR),
 	// чтобы sqlc корректно типизировал повторяющийся параметр service_name.
 	ListPermissionsByUserIDAndServiceID(ctx context.Context, arg ListPermissionsByUserIDAndServiceIDParams) ([]Permission, error)
-	// Разрешения роли вместе с именем владеющего сервиса (аналог joinedload Role.permissions.service).
 	ListPermissionsForRole(ctx context.Context, roleID string) ([]ListPermissionsForRoleRow, error)
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByServiceID(ctx context.Context, arg ListRolesByServiceIDParams) ([]Role, error)
 	ListRolesForUser(ctx context.Context, userID string) ([]Role, error)
-	// Роли с количеством пользователей и разрешений (без фильтра по сервису).
 	ListRolesWithCounts(ctx context.Context, arg ListRolesWithCountsParams) ([]ListRolesWithCountsRow, error)
-	// То же самое, но отфильтровано по service_id.
 	ListRolesWithCountsByServiceID(ctx context.Context, arg ListRolesWithCountsByServiceIDParams) ([]ListRolesWithCountsByServiceIDRow, error)
 	ListServices(ctx context.Context, arg ListServicesParams) ([]ListServicesRow, error)
 	// Сервисы, доступные пользователю через его роли:

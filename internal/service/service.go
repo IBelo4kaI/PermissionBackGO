@@ -21,7 +21,6 @@ func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-// List — аналог ServiceService.get_all.
 func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
@@ -41,9 +40,8 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 
 	items := make([]ServiceResponse, 0, len(rows))
 	for _, r := range rows {
-		// По запросу на элемент списка — ровно как в Python-версии, где
-		// permissions_count вычисляется через ленивую ORM-загрузку relationship
-		// при обращении к .permissions на каждом объекте страницы.
+		// permissions_count считается отдельным запросом на каждый элемент списка
+		// (как ленивая ORM-загрузка .permissions в Python-версии).
 		count, err := s.queries.CountPermissionsByServiceID(ctx, nullable.String(r.ID))
 		if err != nil {
 			return ListResponse{}, err
@@ -79,7 +77,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (ServiceResponse, erro
 	return fromGetByIDRow(row, count), nil
 }
 
-// Create — аналог ServiceService.create.
 func (s *Service) Create(ctx context.Context, req UpsertRequest) (ServiceResponse, error) {
 	id := uuid.NewString()
 
@@ -99,7 +96,6 @@ func (s *Service) Create(ctx context.Context, req UpsertRequest) (ServiceRespons
 	return s.GetByID(ctx, id)
 }
 
-// Update — аналог ServiceService.update.
 func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (ServiceResponse, error) {
 	if _, err := s.GetByID(ctx, id); err != nil {
 		return ServiceResponse{}, err
@@ -121,7 +117,6 @@ func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (Ser
 	return s.GetByID(ctx, id)
 }
 
-// ListAccessibleForUser — аналог ServiceService.get_services_by_user_roles.
 func (s *Service) ListAccessibleForUser(ctx context.Context, userID string) ([]AccessResponse, error) {
 	rows, err := s.queries.ListServicesByUserID(ctx, userID)
 	if err != nil {
@@ -142,8 +137,7 @@ func (s *Service) ListAccessibleForUser(ctx context.Context, userID string) ([]A
 	return items, nil
 }
 
-// IssueAPIKey — аналог ServiceService.issue_api_key. Возвращает сырой ключ
-// РОВНО ОДИН РАЗ; перевыпуск затирает предыдущий ключ (он одноразовый).
+// Возвращает сырой ключ ровно один раз; перевыпуск затирает предыдущий ключ.
 func (s *Service) IssueAPIKey(ctx context.Context, serviceID string) (APIKeyResponse, error) {
 	if _, err := s.GetByID(ctx, serviceID); err != nil {
 		return APIKeyResponse{}, err
@@ -165,7 +159,6 @@ func (s *Service) IssueAPIKey(ctx context.Context, serviceID string) (APIKeyResp
 	return APIKeyResponse{ServiceID: serviceID, APIKey: rawKey}, nil
 }
 
-// RevokeAPIKey — аналог ServiceService.revoke_api_key.
 func (s *Service) RevokeAPIKey(ctx context.Context, serviceID string) error {
 	if _, err := s.GetByID(ctx, serviceID); err != nil {
 		return err

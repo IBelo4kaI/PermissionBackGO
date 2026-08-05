@@ -29,7 +29,6 @@ func (h *Handler) List(c fiber.Ctx) error {
 	return c.JSON(permissions)
 }
 
-// ListByServiceID — GET /permissions/:service_id. Аналог get_permissions_by_service_id.
 func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 	serviceID := c.Params("service_id")
 	page := query.QueryInt(c, "page", 1)
@@ -42,7 +41,6 @@ func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 	return c.JSON(items)
 }
 
-// Create — POST /permissions/create. Аналог create_permission.
 func (h *Handler) Create(c fiber.Ctx) error {
 	var req UpsertRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -62,7 +60,6 @@ func (h *Handler) Create(c fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(perm)
 }
 
-// Update — PUT /permissions/:permission_id. Аналог update_permission.
 func (h *Handler) Update(c fiber.Ctx) error {
 	id := c.Params("permission_id")
 
@@ -88,7 +85,6 @@ func (h *Handler) Update(c fiber.Ctx) error {
 	return c.JSON(perm)
 }
 
-// Delete — DELETE /permissions/:permission_id. Аналог delete_permission.
 func (h *Handler) Delete(c fiber.Ctx) error {
 	id := c.Params("permission_id")
 

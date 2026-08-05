@@ -15,7 +15,6 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-// List — GET /roles. Аналог role_routes.get_roles.
 func (h *Handler) List(c fiber.Ctx) error {
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 10)
@@ -27,7 +26,6 @@ func (h *Handler) List(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// ListByServiceID — GET /roles/service/:service_id. Аналог get_roles_by_service_id.
 func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 	serviceID := c.Params("service_id")
 	page := query.QueryInt(c, "page", 1)
@@ -40,7 +38,6 @@ func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// Create — POST /roles/create. Аналог create_role.
 func (h *Handler) Create(c fiber.Ctx) error {
 	var req UpsertRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -57,7 +54,6 @@ func (h *Handler) Create(c fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(result)
 }
 
-// Update — PUT /roles/:role_id. Аналог update_role.
 func (h *Handler) Update(c fiber.Ctx) error {
 	id := c.Params("role_id")
 
@@ -79,7 +75,6 @@ func (h *Handler) Update(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// Delete — DELETE /roles/:role_id. Аналог delete_role.
 func (h *Handler) Delete(c fiber.Ctx) error {
 	id := c.Params("role_id")
 
@@ -92,7 +87,6 @@ func (h *Handler) Delete(c fiber.Ctx) error {
 	return c.JSON(DeleteResponse{Message: "Роль успешно удалена"})
 }
 
-// AddPermission — POST /roles/perm/add. Аналог role_add.
 func (h *Handler) AddPermission(c fiber.Ctx) error {
 	var req AddPermissionRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -113,7 +107,6 @@ func (h *Handler) AddPermission(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// RemovePermission — POST /roles/perm/remove. Аналог role_remove.
 func (h *Handler) RemovePermission(c fiber.Ctx) error {
 	var req AddPermissionRequest
 	if err := c.Bind().Body(&req); err != nil {
@@ -134,7 +127,6 @@ func (h *Handler) RemovePermission(c fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// Detailed — GET /roles/:role_id/detailed. Аналог get_role_detailed.
 func (h *Handler) Detailed(c fiber.Ctx) error {
 	id := c.Params("role_id")
 

@@ -15,7 +15,7 @@ import (
 	"permisson/internal/pkg/nullable"
 )
 
-// detailedTimeLayout — аналог Python strftime("%d.%m.%Y %H:%M") в get_role_detailed.
+// detailedTimeLayout — формат "dd.mm.yyyy HH:MM", как в Python-версии.
 const detailedTimeLayout = "02.01.2006 15:04"
 
 type Service struct {
@@ -26,7 +26,6 @@ func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-// List — аналог RoleService.get_all.
 func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
@@ -58,7 +57,6 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 	}, nil
 }
 
-// ListByServiceID — аналог RoleService.get_all_by_service_id.
 func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) (ListResponse, error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
@@ -91,9 +89,7 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 	}, nil
 }
 
-// GetByID — вспомогательный метод (аналог repo.get_by_id), используется
-// Create/Update/AddPermission/RemovePermission/Delete для проверки
-// существования роли и сборки ответа после операции.
+// Используется остальными операциями для проверки существования роли и сборки ответа.
 func (s *Service) GetByID(ctx context.Context, id string) (RoleResponse, error) {
 	row, err := s.queries.GetRoleByID(ctx, id)
 	if err != nil {
@@ -105,7 +101,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (RoleResponse, error) 
 	return fromModel(row), nil
 }
 
-// Create — аналог RoleService.create.
 func (s *Service) Create(ctx context.Context, req UpsertRequest) (RoleResponse, error) {
 	id := uuid.NewString()
 
@@ -123,7 +118,6 @@ func (s *Service) Create(ctx context.Context, req UpsertRequest) (RoleResponse, 
 	return s.GetByID(ctx, id)
 }
 
-// Update — аналог RoleService.update.
 func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (RoleResponse, error) {
 	if _, err := s.GetByID(ctx, id); err != nil {
 		return RoleResponse{}, err
@@ -143,7 +137,6 @@ func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (Rol
 	return s.GetByID(ctx, id)
 }
 
-// Delete — аналог RoleService.delete.
 func (s *Service) Delete(ctx context.Context, id string) error {
 	if _, err := s.GetByID(ctx, id); err != nil {
 		return err
@@ -151,7 +144,6 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	return s.queries.DeleteRole(ctx, id)
 }
 
-// AddPermission — аналог RoleService.permission_add.
 func (s *Service) AddPermission(ctx context.Context, roleID, permID string) (RoleResponse, error) {
 	if _, err := s.GetByID(ctx, roleID); err != nil {
 		return RoleResponse{}, err
@@ -182,7 +174,6 @@ func (s *Service) AddPermission(ctx context.Context, roleID, permID string) (Rol
 	return s.GetByID(ctx, roleID)
 }
 
-// RemovePermission — аналог RoleService.permission_remove.
 func (s *Service) RemovePermission(ctx context.Context, roleID, permID string) (RoleResponse, error) {
 	if _, err := s.GetByID(ctx, roleID); err != nil {
 		return RoleResponse{}, err
@@ -224,8 +215,6 @@ func (s *Service) hasPermission(ctx context.Context, roleID, permID string) (boo
 	return false, nil
 }
 
-// Detailed — аналог RoleService.get_role_detailed +
-// RoleRepository.get_role_with_all_permissions_info.
 func (s *Service) Detailed(ctx context.Context, roleID string) (DetailedResponse, error) {
 	roleRow, err := s.queries.GetRoleByID(ctx, roleID)
 	if err != nil {
@@ -263,8 +252,7 @@ func (s *Service) Detailed(ctx context.Context, roleID string) (DetailedResponse
 			usedCount++
 		}
 
-		// "global" — тот же fallback-ключ, что и в Python для permissions
-		// без service_id.
+		// "global" — fallback-ключ для разрешений без service_id.
 		key := "global"
 		if p.ServiceID.Valid {
 			key = p.ServiceID.String
@@ -318,10 +306,8 @@ type allPermRow struct {
 	ServiceName sql.NullString
 }
 
-// allPermissionsForRole — аналог ветвления в
-// RoleRepository.get_role_with_all_permissions_info: если у роли задан
-// service_id — берём разрешения только этого сервиса, иначе (глобальная
-// роль) — вообще все разрешения в системе.
+// Если у роли задан service_id — берём разрешения только этого сервиса,
+// иначе (глобальная роль) — все разрешения в системе.
 func (s *Service) allPermissionsForRole(ctx context.Context, roleRow repo.Role) ([]allPermRow, error) {
 	if roleRow.ServiceID.Valid {
 		rows, err := s.queries.ListAllPermissionsByServiceID(ctx, roleRow.ServiceID)
