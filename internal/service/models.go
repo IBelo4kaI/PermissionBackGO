@@ -28,6 +28,22 @@ type UpsertRequest struct {
 	Prefix      string  `json:"prefix"`
 }
 
+// ServiceIDRequest — ID сервиса в path-параметре :service_id.
+type ServiceIDRequest struct {
+	ServiceID string `uri:"service_id"`
+}
+
+// UpdateServiceRequest — как UpsertRequest, но с ID сервиса в path-параметре.
+type UpdateServiceRequest struct {
+	ServiceID   string  `uri:"service_id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	ImageURL    *string `json:"image_url"`
+	URL         *string `json:"url"`
+	Theme       *string `json:"theme"`
+	Prefix      string  `json:"prefix"`
+}
+
 // api_key отдаётся ровно один раз, при выпуске/перевыпуске — дальше в БД
 // хранится только его хэш.
 type APIKeyResponse struct {
@@ -42,12 +58,4 @@ type AccessResponse struct {
 	ImageURL    *string `json:"image_url,omitempty"`
 	URL         *string `json:"url,omitempty"`
 	Theme       *string `json:"theme,omitempty"`
-}
-
-type ListResponse struct {
-	Items []ServiceResponse `json:"items"`
-	Total int64             `json:"total"`
-	Page  int               `json:"page"`
-	Limit int               `json:"limit"`
-	Pages int               `json:"pages"`
 }

@@ -26,6 +26,20 @@ type UpsertRequest struct {
 	IsGlobal    bool    `json:"is_global"`
 }
 
+// RoleIDRequest — ID роли в path-параметре :role_id.
+type RoleIDRequest struct {
+	RoleID string `uri:"role_id"`
+}
+
+// UpdateRoleRequest — как UpsertRequest, но с ID роли в path-параметре.
+type UpdateRoleRequest struct {
+	RoleID      string  `uri:"role_id"`
+	ServiceID   *string `json:"service_id"`
+	Name        string  `json:"name"`
+	Description string  `json:"description"`
+	IsGlobal    bool    `json:"is_global"`
+}
+
 type AddPermissionRequest struct {
 	RoleID string `json:"role_id"`
 	PermID string `json:"perm_id"`
@@ -35,14 +49,6 @@ type ListByServiceRequest struct {
 	ServiceID string `uri:"service_id"`
 	Page      int    `query:"page" validate:"omitempty,min=1"`
 	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
-}
-
-type ListResponse struct {
-	Items []RoleResponse `json:"items"`
-	Total int64          `json:"total"`
-	Page  int            `json:"page"`
-	Limit int            `json:"limit"`
-	Pages int            `json:"pages"`
 }
 
 type DeleteResponse struct {

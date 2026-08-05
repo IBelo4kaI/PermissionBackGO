@@ -33,14 +33,14 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 			Tags:        []string{"Разрешения"},
 		}))
 
-	ftonic.For[UpsertRequest, Permission](schema).
+	ftonic.For[UpdatePermissionRequest, Permission](schema).
 		PUT(group, "/:permission_id", h.Update, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Редактировать разрешение",
 			Description: "Требует perm:update.",
 			Tags:        []string{"Разрешения"},
 		}))
 
-	ftonic.For[apidoc.Empty, DeleteResponse](schema).
+	ftonic.For[PermissionIDRequest, DeleteResponse](schema).
 		DELETE(group, "/:permission_id", h.Delete, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Удалить разрешение",
 			Description: "Требует perm:delete.",

@@ -19,6 +19,20 @@ type UpsertRequest struct {
 	Description string  `json:"description"`
 }
 
+// PermissionIDRequest — ID разрешения в path-параметре :permission_id.
+type PermissionIDRequest struct {
+	PermissionID string `uri:"permission_id"`
+}
+
+// UpdatePermissionRequest — как UpsertRequest, но с ID разрешения в path-параметре.
+type UpdatePermissionRequest struct {
+	PermissionID string  `uri:"permission_id"`
+	ServiceID    *string `json:"service_id"`
+	Code         string  `json:"code"`
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+}
+
 type ListByServiceRequest struct {
 	ServiceID string `uri:"service_id"`
 	Page      int    `query:"page" validate:"omitempty,min=1"`

@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"slices"
 	"time"
 
 	pageHelper "permisson/internal/pkg/page"
+	"permisson/internal/pkg/response"
 
 	"github.com/google/uuid"
 
@@ -26,7 +26,7 @@ func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, error) {
+func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[RoleResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
@@ -35,12 +35,12 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 		Offset: int32(offset),
 	})
 	if err != nil {
-		return ListResponse{}, err
+		return nil, err
 	}
 
 	total, err := s.queries.CountRoles(ctx)
 	if err != nil {
-		return ListResponse{}, err
+		return nil, err
 	}
 
 	items := make([]RoleResponse, 0, len(rows))
@@ -48,7 +48,7 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 		items = append(items, fromListWithCountsRow(r))
 	}
 
-	return ListResponse{
+	return &response.Page[RoleResponse]{
 		Items: items,
 		Total: total,
 		Page:  page,
@@ -57,7 +57,7 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 	}, nil
 }
 
-func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) (ListResponse, error) {
+func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) (*response.Page[RoleResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
@@ -67,12 +67,12 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 		Offset:    int32(offset),
 	})
 	if err != nil {
-		return ListResponse{}, err
+		return nil, err
 	}
 
 	total, err := s.queries.CountRolesByServiceID(ctx, nullable.String(serviceID))
 	if err != nil {
-		return ListResponse{}, err
+		return nil, err
 	}
 
 	items := make([]RoleResponse, 0, len(rows))
@@ -80,7 +80,7 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 		items = append(items, fromByServiceWithCountsRow(r))
 	}
 
-	return ListResponse{
+	return &response.Page[RoleResponse]{
 		Items: items,
 		Total: total,
 		Page:  page,
@@ -202,17 +202,6 @@ func (s *Service) RemovePermission(ctx context.Context, roleID, permID string) (
 	}
 
 	return s.GetByID(ctx, roleID)
-}
-
-func (s *Service) hasPermission(ctx context.Context, roleID, permID string) (bool, error) {
-	ids, err := s.queries.ListUsedPermissionIDsForRole(ctx, roleID)
-	if err != nil {
-		return false, err
-	}
-	if slices.Contains(ids, permID) {
-		return true, nil
-	}
-	return false, nil
 }
 
 func (s *Service) Detailed(ctx context.Context, roleID string) (DetailedResponse, error) {

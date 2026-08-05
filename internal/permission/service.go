@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	repo "permisson/internal/database/sqlc"
 	"permisson/internal/pkg/nullable"
 	pageHelper "permisson/internal/pkg/page"
@@ -41,8 +40,6 @@ func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Per
 	for _, r := range rows {
 		items = append(items, fromListRow(r))
 	}
-
-	fmt.Printf("%v\n", rows)
 
 	return &response.Page[Permission]{
 		Items: items,

@@ -10,6 +10,7 @@ import (
 	repo "permisson/internal/database/sqlc"
 	"permisson/internal/pkg/nullable"
 	pageHelper "permisson/internal/pkg/page"
+	"permisson/internal/pkg/response"
 	"permisson/internal/pkg/token"
 )
 
@@ -21,7 +22,7 @@ func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, error) {
+func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[ServiceResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
@@ -30,12 +31,12 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 		Offset: int32(offset),
 	})
 	if err != nil {
-		return ListResponse{}, err
+		return nil, err
 	}
 
 	total, err := s.queries.CountServices(ctx)
 	if err != nil {
-		return ListResponse{}, err
+		return nil, err
 	}
 
 	items := make([]ServiceResponse, 0, len(rows))
@@ -44,12 +45,12 @@ func (s *Service) List(ctx context.Context, page, limit int) (ListResponse, erro
 		// (как ленивая ORM-загрузка .permissions в Python-версии).
 		count, err := s.queries.CountPermissionsByServiceID(ctx, nullable.String(r.ID))
 		if err != nil {
-			return ListResponse{}, err
+			return nil, err
 		}
 		items = append(items, fromListRow(r, count))
 	}
 
-	return ListResponse{
+	return &response.Page[ServiceResponse]{
 		Items: items,
 		Total: total,
 		Page:  page,
