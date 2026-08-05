@@ -1,6 +1,7 @@
 package user
 
 import (
+	middlewares "permisson/internal/middleware"
 	"permisson/internal/permission"
 	"permisson/internal/pkg/apidoc"
 	"permisson/internal/pkg/response"
@@ -10,30 +11,27 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// require_permission пока не подключён — роуты работают без проверки прав
-// до появления middleware.RequirePermission.
-//
 // Статические пути (/service/:service_id, /all, /me, /me/permissions/:service_id)
 // регистрируются раньше /:user_id, иначе Fiber перехватит их параметром.
-func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
+func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, require middlewares.Require) {
 	group := router.Group("/users")
 
 	ftonic.For[apidoc.Pagination, response.Page[UserResponse]](schema).
-		GET(group, "/", h.List, ftonic.WithOperation(docs.OperationObject{
+		GET(group, "/", require("users", "read_all"), h.List, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список пользователей",
 			Description: "Требует users:read_all.",
 			Tags:        []string{"Пользователи"},
 		}))
 
 	ftonic.For[ListByServiceRequest, response.Page[UserResponse]](schema).
-		GET(group, "/service/:service_id", h.ListByServiceID, ftonic.WithOperation(docs.OperationObject{
+		GET(group, "/service/:service_id", require("users", "read_all"), h.ListByServiceID, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список пользователей по service_id",
 			Description: "Требует users:read_all.",
 			Tags:        []string{"Пользователи"},
 		}))
 
 	ftonic.For[apidoc.Empty, []UserResponse](schema).
-		GET(group, "/all", h.ListAll, ftonic.WithOperation(docs.OperationObject{
+		GET(group, "/all", require("users", "read_all"), h.ListAll, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список пользователей без пагинации",
 			Description: "Требует users:read_all.",
 			Tags:        []string{"Пользователи"},
@@ -54,21 +52,21 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 		}))
 
 	ftonic.For[UserIDRequest, UserResponse](schema).
-		GET(group, "/:user_id", h.GetByID, ftonic.WithOperation(docs.OperationObject{
+		GET(group, "/:user_id", require("users", "read"), h.GetByID, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить пользователя по id",
 			Description: "Требует users:read.",
 			Tags:        []string{"Пользователи"},
 		}))
 
 	ftonic.For[UpdateUserRequest, UserResponse](schema).
-		PUT(group, "/:user_id", h.Update, ftonic.WithOperation(docs.OperationObject{
+		PUT(group, "/:user_id", require("users", "update"), h.Update, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Обновить пользователя",
 			Description: "Частичное обновление: передавать можно любое подмножество полей. Требует users:update.",
 			Tags:        []string{"Пользователи"},
 		}))
 
 	ftonic.For[UserIDRequest, DeleteResponse](schema).
-		DELETE(group, "/:user_id", h.Delete, ftonic.WithOperation(docs.OperationObject{
+		DELETE(group, "/:user_id", require("users", "delete"), h.Delete, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Удалить пользователя",
 			Description: "Требует users:delete.",
 			Tags:        []string{"Пользователи"},
@@ -82,14 +80,14 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 		}))
 
 	ftonic.For[RoleRequest, UserResponse](schema).
-		POST(group, "/roles/add", h.AddRole, ftonic.WithOperation(docs.OperationObject{
+		POST(group, "/roles/add", require("users.roles", "edit"), h.AddRole, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Добавить роль пользователю",
 			Description: "Требует users.roles:edit.",
 			Tags:        []string{"Пользователи"},
 		}))
 
 	ftonic.For[RoleRequest, UserResponse](schema).
-		POST(group, "/roles/remove", h.RemoveRole, ftonic.WithOperation(docs.OperationObject{
+		POST(group, "/roles/remove", require("users.roles", "edit"), h.RemoveRole, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Удалить роль у пользователя",
 			Description: "Требует users.roles:edit.",
 			Tags:        []string{"Пользователи"},

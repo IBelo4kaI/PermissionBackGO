@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"permisson/internal/auth"
 	repo "permisson/internal/database/sqlc"
+	middlewares "permisson/internal/middleware"
 	"permisson/internal/permission"
 	"permisson/internal/role"
 	"permisson/internal/service"
@@ -64,20 +65,23 @@ func (app *application) mount() *fiber.App {
 	auth.RegisterRoutes(v1, authHandler, schema)
 
 	permissionService := permission.NewService(repo.New(app.db))
+
+	require := middlewares.NewRequire(authService, permissionService)
+
 	permissionHandler := permission.NewHandler(permissionService)
-	permission.RegisterRoutes(v1, permissionHandler, schema)
+	permission.RegisterRoutes(v1, permissionHandler, schema, require)
 
 	serviceService := service.NewService(repo.New(app.db))
 	serviceHandler := service.NewHandler(serviceService, authService)
-	service.RegisterRoutes(v1, serviceHandler, schema)
+	service.RegisterRoutes(v1, serviceHandler, schema, require)
 
 	userService := user.NewService(repo.New(app.db))
 	userHandler := user.NewHandler(userService, authService)
-	user.RegisterRoutes(v1, userHandler, schema)
+	user.RegisterRoutes(v1, userHandler, schema, require)
 
 	roleService := role.NewService(repo.New(app.db))
 	roleHandler := role.NewHandler(roleService)
-	role.RegisterRoutes(v1, roleHandler, schema)
+	role.RegisterRoutes(v1, roleHandler, schema, require)
 
 	schema.UIHandle(fiberApp, "/docs", core.SwaggerUI)
 
