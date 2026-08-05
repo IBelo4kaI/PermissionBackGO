@@ -89,5 +89,5 @@ func (app *application) mount() *fiber.App {
 }
 
 func (app *application) run(f *fiber.App) error {
-	return f.Listen(app.config.addr, fiber.ListenConfig{EnablePrefork: true})
+	return f.Listen(app.config.addr)
 }
