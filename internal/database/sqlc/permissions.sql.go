@@ -12,8 +12,10 @@ import (
 )
 
 const countPermissions = `-- name: CountPermissions :one
-SELECT COUNT(*) AS total
-FROM permissions
+SELECT
+	COUNT(*) AS total
+FROM
+	permissions
 `
 
 func (q *Queries) CountPermissions(ctx context.Context) (int64, error) {
@@ -24,9 +26,12 @@ func (q *Queries) CountPermissions(ctx context.Context) (int64, error) {
 }
 
 const countPermissionsByServiceID = `-- name: CountPermissionsByServiceID :one
-SELECT COUNT(*) AS total
-FROM permissions
-WHERE service_id = ?
+SELECT
+	COUNT(*) AS total
+FROM
+	permissions
+WHERE
+	service_id = ?
 `
 
 func (q *Queries) CountPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error) {
@@ -37,8 +42,10 @@ func (q *Queries) CountPermissionsByServiceID(ctx context.Context, serviceID sql
 }
 
 const createPermission = `-- name: CreatePermission :exec
-INSERT INTO permissions (id, service_id, code, name, description, created_at)
-VALUES (?, ?, ?, ?, ?, NOW())
+INSERT INTO
+	permissions (id, service_id, code, name, description, created_at)
+VALUES
+	(?, ?, ?, ?, ?, NOW())
 `
 
 type CreatePermissionParams struct {
@@ -62,7 +69,8 @@ func (q *Queries) CreatePermission(ctx context.Context, arg CreatePermissionPara
 
 const deletePermission = `-- name: DeletePermission :exec
 DELETE FROM permissions
-WHERE id = ?
+WHERE
+	id = ?
 `
 
 func (q *Queries) DeletePermission(ctx context.Context, id string) error {
@@ -71,59 +79,57 @@ func (q *Queries) DeletePermission(ctx context.Context, id string) error {
 }
 
 const existsUserPermission = `-- name: ExistsUserPermission :one
-SELECT EXISTS (
-    SELECT 1
-    FROM permissions p
-    JOIN role_permissions rp ON rp.permission_id = p.id
-    JOIN user_roles ur ON ur.role_id = rp.role_id
-    WHERE ur.user_id = ?
-      AND p.code IN (
-        CONCAT(?, ':', ?, ':', ?),
-        CONCAT(?, ':', ?, ':all'),
-        CONCAT(?, ':all:', ?),
-        CONCAT(?, ':all:all'),
-        CONCAT('all:', ?, ':', ?),
-        CONCAT('all:', ?, ':all'),
-        CONCAT('all:all:', ?),
-        'all:all:all'
-      )
-    LIMIT 1
-) AS has_permission
+SELECT
+	EXISTS (
+		SELECT
+			1
+		FROM
+			permissions p
+			JOIN role_permissions rp ON rp.permission_id = p.id
+			JOIN user_roles ur ON ur.role_id = rp.role_id
+		WHERE
+			ur.user_id = ?
+			AND p.code IN (
+				CONCAT(CAST(? AS char), ':', CAST(? AS char), ':', CAST(? AS char)),
+				CONCAT(CAST(? AS char), ':', CAST(? AS char), ':all'),
+				CONCAT(CAST(? AS char), ':all:', CAST(? AS char)),
+				CONCAT(CAST(? AS char), ':all:all'),
+				CONCAT('all:', CAST(? AS char), ':', CAST(? AS char)),
+				CONCAT('all:', CAST(? AS char), ':all'),
+				CONCAT('all:all:', CAST(? AS char)),
+				'all:all:all'
+			)
+		LIMIT
+			1
+	) AS has_permission
 `
 
 type ExistsUserPermissionParams struct {
-	UserID    string      `json:"userId"`
-	CONCAT    interface{} `json:"CONCAT"`
-	CONCAT_2  interface{} `json:"CONCAT2"`
-	CONCAT_3  interface{} `json:"CONCAT3"`
-	CONCAT_4  interface{} `json:"CONCAT4"`
-	CONCAT_5  interface{} `json:"CONCAT5"`
-	CONCAT_6  interface{} `json:"CONCAT6"`
-	CONCAT_7  interface{} `json:"CONCAT7"`
-	CONCAT_8  interface{} `json:"CONCAT8"`
-	CONCAT_9  interface{} `json:"CONCAT9"`
-	CONCAT_10 interface{} `json:"CONCAT10"`
-	CONCAT_11 interface{} `json:"CONCAT11"`
-	CONCAT_12 interface{} `json:"CONCAT12"`
+	UserID  string      `json:"userId"`
+	Service interface{} `json:"service"`
+	Entity  interface{} `json:"entity"`
+	Action  interface{} `json:"action"`
 }
 
 // Проверка наличия разрешения у пользователя с учётом всех wildcard-комбинаций
-// сегментов "service:entity:action".
+// сегментов "service:entity:action". Каждый sqlc.arg(...) используется несколько
+// раз, но CAST(... AS CHAR) даёт sqlc однозначный тип (string), поэтому в
+// сгенерированных параметрах будет ровно 4 понятных поля, а не CONCAT_2..CONCAT_12.
 func (q *Queries) ExistsUserPermission(ctx context.Context, arg ExistsUserPermissionParams) (bool, error) {
 	row := q.db.QueryRowContext(ctx, existsUserPermission,
 		arg.UserID,
-		arg.CONCAT,
-		arg.CONCAT_2,
-		arg.CONCAT_3,
-		arg.CONCAT_4,
-		arg.CONCAT_5,
-		arg.CONCAT_6,
-		arg.CONCAT_7,
-		arg.CONCAT_8,
-		arg.CONCAT_9,
-		arg.CONCAT_10,
-		arg.CONCAT_11,
-		arg.CONCAT_12,
+		arg.Service,
+		arg.Entity,
+		arg.Action,
+		arg.Service,
+		arg.Entity,
+		arg.Service,
+		arg.Action,
+		arg.Service,
+		arg.Entity,
+		arg.Action,
+		arg.Entity,
+		arg.Action,
 	)
 	var has_permission bool
 	err := row.Scan(&has_permission)
@@ -131,14 +137,34 @@ func (q *Queries) ExistsUserPermission(ctx context.Context, arg ExistsUserPermis
 }
 
 const getPermissionByCode = `-- name: GetPermissionByCode :one
-SELECT id, service_id, code, name, description, created_at
-FROM permissions
-WHERE code = ?
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	p.code = ?
 `
 
-func (q *Queries) GetPermissionByCode(ctx context.Context, code string) (Permission, error) {
+type GetPermissionByCodeRow struct {
+	ID          string         `json:"id"`
+	ServiceID   sql.NullString `json:"serviceId"`
+	Code        string         `json:"code"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	ServiceName sql.NullString `json:"serviceName"`
+}
+
+func (q *Queries) GetPermissionByCode(ctx context.Context, code string) (GetPermissionByCodeRow, error) {
 	row := q.db.QueryRowContext(ctx, getPermissionByCode, code)
-	var i Permission
+	var i GetPermissionByCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.ServiceID,
@@ -146,19 +172,40 @@ func (q *Queries) GetPermissionByCode(ctx context.Context, code string) (Permiss
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
+		&i.ServiceName,
 	)
 	return i, err
 }
 
 const getPermissionByID = `-- name: GetPermissionByID :one
-SELECT id, service_id, code, name, description, created_at
-FROM permissions
-WHERE id = ?
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	p.id = ?
 `
 
-func (q *Queries) GetPermissionByID(ctx context.Context, id string) (Permission, error) {
+type GetPermissionByIDRow struct {
+	ID          string         `json:"id"`
+	ServiceID   sql.NullString `json:"serviceId"`
+	Code        string         `json:"code"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	ServiceName sql.NullString `json:"serviceName"`
+}
+
+func (q *Queries) GetPermissionByID(ctx context.Context, id string) (GetPermissionByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getPermissionByID, id)
-	var i Permission
+	var i GetPermissionByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.ServiceID,
@@ -166,14 +213,23 @@ func (q *Queries) GetPermissionByID(ctx context.Context, id string) (Permission,
 		&i.Name,
 		&i.Description,
 		&i.CreatedAt,
+		&i.ServiceName,
 	)
 	return i, err
 }
 
 const listAllPermissions = `-- name: ListAllPermissions :many
-SELECT p.id, p.service_id, p.code, p.name, p.description, p.created_at, s.name AS service_name
-FROM permissions p
-LEFT JOIN services s ON s.id = p.service_id
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
 `
 
 type ListAllPermissionsRow struct {
@@ -186,7 +242,7 @@ type ListAllPermissionsRow struct {
 	ServiceName sql.NullString `json:"serviceName"`
 }
 
-// Без пагинации: используется, например, при сборе информации о глобальной роли.
+// Без пагинации: используется при сборе информации о глобальной роли (позже, в role-сущности).
 func (q *Queries) ListAllPermissions(ctx context.Context) ([]ListAllPermissionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listAllPermissions)
 	if err != nil {
@@ -219,10 +275,19 @@ func (q *Queries) ListAllPermissions(ctx context.Context) ([]ListAllPermissionsR
 }
 
 const listAllPermissionsByServiceID = `-- name: ListAllPermissionsByServiceID :many
-SELECT p.id, p.service_id, p.code, p.name, p.description, p.created_at, s.name AS service_name
-FROM permissions p
-LEFT JOIN services s ON s.id = p.service_id
-WHERE p.service_id = ?
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	p.service_id = ?
 `
 
 type ListAllPermissionsByServiceIDRow struct {
@@ -268,10 +333,23 @@ func (q *Queries) ListAllPermissionsByServiceID(ctx context.Context, serviceID s
 }
 
 const listPermissions = `-- name: ListPermissions :many
-SELECT id, service_id, code, name, description, created_at
-FROM permissions
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+ORDER BY
+	p.created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListPermissionsParams struct {
@@ -279,15 +357,25 @@ type ListPermissionsParams struct {
 	Offset int32 `json:"offset"`
 }
 
-func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]Permission, error) {
+type ListPermissionsRow struct {
+	ID          string         `json:"id"`
+	ServiceID   sql.NullString `json:"serviceId"`
+	Code        string         `json:"code"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	ServiceName sql.NullString `json:"serviceName"`
+}
+
+func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]ListPermissionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPermissions, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Permission
+	var items []ListPermissionsRow
 	for rows.Next() {
-		var i Permission
+		var i ListPermissionsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ServiceID,
@@ -295,6 +383,7 @@ func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams
 			&i.Name,
 			&i.Description,
 			&i.CreatedAt,
+			&i.ServiceName,
 		); err != nil {
 			return nil, err
 		}
@@ -310,11 +399,25 @@ func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams
 }
 
 const listPermissionsByServiceID = `-- name: ListPermissionsByServiceID :many
-SELECT id, service_id, code, name, description, created_at
-FROM permissions
-WHERE service_id = ?
-ORDER BY created_at DESC
-LIMIT ? OFFSET ?
+SELECT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at,
+	s.name AS service_name
+FROM
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	p.service_id = ?
+ORDER BY
+	p.created_at DESC
+LIMIT
+	?
+OFFSET
+	?
 `
 
 type ListPermissionsByServiceIDParams struct {
@@ -323,15 +426,25 @@ type ListPermissionsByServiceIDParams struct {
 	Offset    int32          `json:"offset"`
 }
 
-func (q *Queries) ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]Permission, error) {
+type ListPermissionsByServiceIDRow struct {
+	ID          string         `json:"id"`
+	ServiceID   sql.NullString `json:"serviceId"`
+	Code        string         `json:"code"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	ServiceName sql.NullString `json:"serviceName"`
+}
+
+func (q *Queries) ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]ListPermissionsByServiceIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, listPermissionsByServiceID, arg.ServiceID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Permission
+	var items []ListPermissionsByServiceIDRow
 	for rows.Next() {
-		var i Permission
+		var i ListPermissionsByServiceIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ServiceID,
@@ -339,6 +452,7 @@ func (q *Queries) ListPermissionsByServiceID(ctx context.Context, arg ListPermis
 			&i.Name,
 			&i.Description,
 			&i.CreatedAt,
+			&i.ServiceName,
 		); err != nil {
 			return nil, err
 		}
@@ -354,11 +468,19 @@ func (q *Queries) ListPermissionsByServiceID(ctx context.Context, arg ListPermis
 }
 
 const listPermissionsByUserID = `-- name: ListPermissionsByUserID :many
-SELECT DISTINCT p.id, p.service_id, p.code, p.name, p.description, p.created_at
-FROM permissions p
-JOIN role_permissions rp ON rp.permission_id = p.id
-JOIN user_roles ur ON ur.role_id = rp.role_id
-WHERE ur.user_id = ?
+SELECT DISTINCT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at
+FROM
+	permissions p
+	JOIN role_permissions rp ON rp.permission_id = p.id
+	JOIN user_roles ur ON ur.role_id = rp.role_id
+WHERE
+	ur.user_id = ?
 `
 
 // Все разрешения, доступные пользователю через все его роли.
@@ -393,28 +515,37 @@ func (q *Queries) ListPermissionsByUserID(ctx context.Context, userID string) ([
 }
 
 const listPermissionsByUserIDAndServiceID = `-- name: ListPermissionsByUserIDAndServiceID :many
-SELECT DISTINCT p.id, p.service_id, p.code, p.name, p.description, p.created_at
-FROM permissions p
-JOIN role_permissions rp ON rp.permission_id = p.id
-JOIN user_roles ur ON ur.role_id = rp.role_id
-WHERE ur.user_id = ?
-  AND (
-    p.service_id = ?
-    OR p.code LIKE CONCAT(?, ':%')
-    OR p.code LIKE 'all:%'
-  )
+SELECT DISTINCT
+	p.id,
+	p.service_id,
+	p.code,
+	p.name,
+	p.description,
+	p.created_at
+FROM
+	permissions p
+	JOIN role_permissions rp ON rp.permission_id = p.id
+	JOIN user_roles ur ON ur.role_id = rp.role_id
+WHERE
+	ur.user_id = ?
+	AND (
+		p.service_id = ?
+		OR p.code like CONCAT(CAST(? AS char), ':%')
+		OR p.code like 'all:%'
+	)
 `
 
 type ListPermissionsByUserIDAndServiceIDParams struct {
-	UserID    string         `json:"userId"`
-	ServiceID sql.NullString `json:"serviceId"`
-	CONCAT    interface{}    `json:"CONCAT"`
+	UserID      string         `json:"userId"`
+	ServiceID   sql.NullString `json:"serviceId"`
+	ServiceName interface{}    `json:"serviceName"`
 }
 
 // Разрешения пользователя для конкретного сервиса с учётом wildcard-кодов
-// вида "all:all:all" и "<service_name>:all:all".
+// вида "all:all:all" и "<service_name>:all:all". sqlc.arg + CAST(...AS CHAR),
+// чтобы sqlc корректно типизировал повторяющийся параметр service_name.
 func (q *Queries) ListPermissionsByUserIDAndServiceID(ctx context.Context, arg ListPermissionsByUserIDAndServiceIDParams) ([]Permission, error) {
-	rows, err := q.db.QueryContext(ctx, listPermissionsByUserIDAndServiceID, arg.UserID, arg.ServiceID, arg.CONCAT)
+	rows, err := q.db.QueryContext(ctx, listPermissionsByUserIDAndServiceID, arg.UserID, arg.ServiceID, arg.ServiceName)
 	if err != nil {
 		return nil, err
 	}
@@ -445,11 +576,13 @@ func (q *Queries) ListPermissionsByUserIDAndServiceID(ctx context.Context, arg L
 
 const updatePermission = `-- name: UpdatePermission :exec
 UPDATE permissions
-SET service_id  = ?,
-    code        = ?,
-    name        = ?,
-    description = ?
-WHERE id = ?
+SET
+	service_id = ?,
+	code = ?,
+	name = ?,
+	description = ?
+WHERE
+	id = ?
 `
 
 type UpdatePermissionParams struct {

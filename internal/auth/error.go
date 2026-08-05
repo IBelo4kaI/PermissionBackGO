@@ -8,4 +8,5 @@ var (
 	ErrUserInactive       = errors.New("Аккаунт пользователя неактивен, обратитесь к администратору")
 	ErrUsernameRequired   = errors.New("Почта обязательна")
 	ErrPasswordRequired   = errors.New("Пароль обязателен")
+	ErrInvalidSession     = errors.New("Недействительная сессия")
 )

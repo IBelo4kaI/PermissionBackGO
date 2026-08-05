@@ -76,3 +76,19 @@ func (s *Service) ValidateSession(ctx context.Context, rawToken string) (bool, e
 
 	return true, nil
 }
+
+func (s *Service) SessionUserID(ctx context.Context, rawToken string) (string, error) {
+	if rawToken == "" {
+		return "", ErrInvalidSession
+	}
+
+	session, err := s.queries.GetSessionByTokenHash(ctx, token.Hash(rawToken))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return "", ErrInvalidSession
+		}
+		return "", err
+	}
+
+	return session.UserID, nil
+}

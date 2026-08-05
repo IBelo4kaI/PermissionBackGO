@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"permisson/internal/auth"
 	repo "permisson/internal/database/sqlc"
+	"permisson/internal/permission"
+	"permisson/internal/service"
 	"time"
 
 	ftonic "github.com/TickLabVN/tonic/adapters/fiber"
@@ -58,6 +60,14 @@ func (app *application) mount() *fiber.App {
 	authService := auth.NewService(repo.New(app.db), time.Hour*4)
 	authHandler := auth.NewHandler(authService, app.config.appEnv == "production", app.config.cookieDomain)
 	auth.RegisterRoutes(v1, authHandler, schema)
+
+	permissionService := permission.NewService(repo.New(app.db))
+	permissionHandler := permission.NewHandler(permissionService)
+	permission.RegisterRoutes(v1, permissionHandler, schema)
+
+	serviceService := service.NewService(repo.New(app.db))
+	serviceHandler := service.NewHandler(serviceService, authService)
+	service.RegisterRoutes(v1, serviceHandler, schema)
 
 	schema.UIHandle(fiberApp, "/docs", core.SwaggerUI)
 

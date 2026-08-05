@@ -34,11 +34,13 @@ type Querier interface {
 	DeleteSessionsByUserID(ctx context.Context, userID string) error
 	DeleteUser(ctx context.Context, id string) error
 	// Проверка наличия разрешения у пользователя с учётом всех wildcard-комбинаций
-	// сегментов "service:entity:action".
+	// сегментов "service:entity:action". Каждый sqlc.arg(...) используется несколько
+	// раз, но CAST(... AS CHAR) даёт sqlc однозначный тип (string), поэтому в
+	// сгенерированных параметрах будет ровно 4 понятных поля, а не CONCAT_2..CONCAT_12.
 	ExistsUserPermission(ctx context.Context, arg ExistsUserPermissionParams) (bool, error)
 	GetGenderByID(ctx context.Context, id string) (Gender, error)
-	GetPermissionByCode(ctx context.Context, code string) (Permission, error)
-	GetPermissionByID(ctx context.Context, id string) (Permission, error)
+	GetPermissionByCode(ctx context.Context, code string) (GetPermissionByCodeRow, error)
+	GetPermissionByID(ctx context.Context, id string) (GetPermissionByIDRow, error)
 	GetRoleByID(ctx context.Context, id string) (Role, error)
 	GetServiceByAPIKeyHash(ctx context.Context, apiKeyHash sql.NullString) (GetServiceByAPIKeyHashRow, error)
 	GetServiceByID(ctx context.Context, id string) (GetServiceByIDRow, error)
@@ -46,18 +48,19 @@ type Querier interface {
 	GetSessionByTokenHash(ctx context.Context, tokenHash string) (GetSessionByTokenHashRow, error)
 	GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error)
 	GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error)
-	// Без пагинации: используется, например, при сборе информации о глобальной роли.
+	// Без пагинации: используется при сборе информации о глобальной роли (позже, в role-сущности).
 	ListAllPermissions(ctx context.Context) ([]ListAllPermissionsRow, error)
 	// Без пагинации: используется при сборе информации о роли, привязанной к сервису.
 	ListAllPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) ([]ListAllPermissionsByServiceIDRow, error)
 	ListAllUsers(ctx context.Context) ([]ListAllUsersRow, error)
 	ListGenders(ctx context.Context) ([]Gender, error)
-	ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]Permission, error)
-	ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]Permission, error)
+	ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]ListPermissionsRow, error)
+	ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]ListPermissionsByServiceIDRow, error)
 	// Все разрешения, доступные пользователю через все его роли.
 	ListPermissionsByUserID(ctx context.Context, userID string) ([]Permission, error)
 	// Разрешения пользователя для конкретного сервиса с учётом wildcard-кодов
-	// вида "all:all:all" и "<service_name>:all:all".
+	// вида "all:all:all" и "<service_name>:all:all". sqlc.arg + CAST(...AS CHAR),
+	// чтобы sqlc корректно типизировал повторяющийся параметр service_name.
 	ListPermissionsByUserIDAndServiceID(ctx context.Context, arg ListPermissionsByUserIDAndServiceIDParams) ([]Permission, error)
 	// Разрешения роли вместе с именем владеющего сервиса (аналог joinedload Role.permissions.service).
 	ListPermissionsForRole(ctx context.Context, roleID string) ([]ListPermissionsForRoleRow, error)
