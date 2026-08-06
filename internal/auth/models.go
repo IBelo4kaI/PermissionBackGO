@@ -15,3 +15,7 @@ type LoginResult struct {
 type ValidateSessionResponse struct {
 	Valid bool `json:"valid" example:"true" description:"Whether the provided session is valid"`
 }
+
+type LogoutResponse struct {
+	Message string `json:"message" example:"Вы успешно вышли из системы" description:"Result message"`
+}

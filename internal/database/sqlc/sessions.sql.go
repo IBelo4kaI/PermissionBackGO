@@ -11,8 +11,10 @@ import (
 )
 
 const createSession = `-- name: CreateSession :exec
-INSERT INTO sessions (id, user_id, token_hash, expires_at)
-VALUES (?, ?, ?, ?)
+INSERT INTO
+	sessions (id, user_id, token_hash, expires_at)
+VALUES
+	(?, ?, ?, ?)
 `
 
 type CreateSessionParams struct {
@@ -34,7 +36,8 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 
 const deleteSessionByID = `-- name: DeleteSessionByID :exec
 DELETE FROM sessions
-WHERE id = ?
+WHERE
+	id = ?
 `
 
 func (q *Queries) DeleteSessionByID(ctx context.Context, id string) error {
@@ -42,9 +45,22 @@ func (q *Queries) DeleteSessionByID(ctx context.Context, id string) error {
 	return err
 }
 
+const deleteSessionByTokenHash = `-- name: DeleteSessionByTokenHash :exec
+DELETE FROM sessions
+WHERE
+	token_hash = ?
+`
+
+// Удаление сессии по хэшу токена (logout). Токен хэшируется SHA-256 на стороне Go.
+func (q *Queries) DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error {
+	_, err := q.db.ExecContext(ctx, deleteSessionByTokenHash, tokenHash)
+	return err
+}
+
 const deleteSessionsByUserID = `-- name: DeleteSessionsByUserID :exec
 DELETE FROM sessions
-WHERE user_id = ?
+WHERE
+	user_id = ?
 `
 
 // Нужно вызывать перед удалением пользователя (FK sessions.user_id -> users.id).
@@ -54,10 +70,16 @@ func (q *Queries) DeleteSessionsByUserID(ctx context.Context, userID string) err
 }
 
 const getSessionByTokenHash = `-- name: GetSessionByTokenHash :one
-SELECT id, user_id, token_hash, expires_at
-FROM sessions
-WHERE token_hash = ?
-  AND expires_at > UTC_TIMESTAMP()
+SELECT
+	id,
+	user_id,
+	token_hash,
+	expires_at
+FROM
+	sessions
+WHERE
+	token_hash = ?
+	AND expires_at > UTC_TIMESTAMP()
 `
 
 type GetSessionByTokenHashRow struct {

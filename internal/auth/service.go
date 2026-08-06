@@ -77,6 +77,16 @@ func (s *Service) ValidateSession(ctx context.Context, rawToken string) (bool, e
 	return true, nil
 }
 
+// Logout удаляет сессию по сырому токену (в БД хранится только его SHA-256 хэш).
+// Идемпотентен: если сессия уже не существует (например, истекла), ошибки нет.
+func (s *Service) Logout(ctx context.Context, rawToken string) error {
+	if rawToken == "" {
+		return ErrSessionTokenMissing
+	}
+
+	return s.queries.DeleteSessionByTokenHash(ctx, token.Hash(rawToken))
+}
+
 func (s *Service) SessionUserID(ctx context.Context, rawToken string) (string, error) {
 	if rawToken == "" {
 		return "", ErrInvalidSession

@@ -22,4 +22,10 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 			Summary: "Проверка токена на валидность",
 			Tags:    []string{"Авторизация"},
 		}))
+
+	ftonic.For[any, LogoutResponse](schema).
+		POST(group, "/logout", h.Logout, ftonic.WithOperation(docs.OperationObject{
+			Summary: "Выход из системы и удаление сессии",
+			Tags:    []string{"Авторизация"},
+		}))
 }

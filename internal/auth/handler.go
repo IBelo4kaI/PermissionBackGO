@@ -65,3 +65,29 @@ func (h *Handler) ValidateSession(c fiber.Ctx) error {
 
 	return c.JSON(ValidateSessionResponse{Valid: valid})
 }
+
+// Logout удаляет сессию пользователя и очищает cookie "session".
+func (h *Handler) Logout(c fiber.Ctx) error {
+	sessionToken := c.Cookies("session")
+
+	err := h.service.Logout(c.Context(), sessionToken)
+	if err != nil {
+		if errors.Is(err, ErrSessionTokenMissing) {
+			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "session",
+		Path:     "/",
+		HTTPOnly: true,
+		SameSite: "Lax",
+		Value:    "",
+		MaxAge:   -1,
+		Secure:   h.cookieSecure,
+		Domain:   h.cookieDomain,
+	})
+
+	return c.JSON(LogoutResponse{Message: "Вы успешно вышли из системы"})
+}

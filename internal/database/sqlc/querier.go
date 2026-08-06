@@ -28,6 +28,8 @@ type Querier interface {
 	DeleteRole(ctx context.Context, id string) error
 	DeleteService(ctx context.Context, id string) error
 	DeleteSessionByID(ctx context.Context, id string) error
+	// Удаление сессии по хэшу токена (logout). Токен хэшируется SHA-256 на стороне Go.
+	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
 	// Нужно вызывать перед удалением пользователя (FK sessions.user_id -> users.id).
 	DeleteSessionsByUserID(ctx context.Context, userID string) error
 	DeleteUser(ctx context.Context, id string) error
