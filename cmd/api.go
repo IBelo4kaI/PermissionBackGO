@@ -60,7 +60,7 @@ func (app *application) mount() *fiber.App {
 
 	v1 := fiberApp.Group("/api/as")
 
-	authService := auth.NewService(repo.New(app.db), time.Hour*4)
+	authService := auth.NewService(repo.New(app.db), app.config.sessionTTL)
 	authHandler := auth.NewHandler(authService, app.config.appEnv == "production", app.config.cookieDomain)
 	auth.RegisterRoutes(v1, authHandler, schema)
 
