@@ -20,7 +20,7 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 			Tags:        []string{"Разрешения"},
 		}))
 
-	ftonic.For[ListByServiceRequest, []Permission](schema).
+	ftonic.For[ListByServiceRequest, response.Page[Permission]](schema).
 		GET(group, "/:service_id", require("perm", "read"), h.ListByServiceID, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список разрешений для сервиса",
 			Description: "Требует perm:read.",

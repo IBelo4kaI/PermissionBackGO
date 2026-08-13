@@ -15,11 +15,28 @@ const countPermissions = `-- name: CountPermissions :one
 SELECT
 	COUNT(*) AS total
 FROM
-	permissions
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	CAST(? AS char) IS NULL
+	OR p.code LIKE CONCAT('%', CAST(? AS char), '%')
+	OR p.name LIKE CONCAT('%', CAST(? AS char), '%')
+	OR p.description LIKE CONCAT('%', CAST(? AS char), '%')
+	OR s.name LIKE CONCAT('%', CAST(? AS char), '%')
 `
 
-func (q *Queries) CountPermissions(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPermissions)
+type CountPermissionsParams struct {
+	Search interface{} `json:"search"`
+}
+
+func (q *Queries) CountPermissions(ctx context.Context, arg CountPermissionsParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPermissions,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -29,13 +46,30 @@ const countPermissionsByServiceID = `-- name: CountPermissionsByServiceID :one
 SELECT
 	COUNT(*) AS total
 FROM
-	permissions
+	permissions p
 WHERE
-	service_id = ?
+	p.service_id = ?
+	AND (
+		CAST(? AS char) IS NULL
+		OR p.code LIKE CONCAT('%', CAST(? AS char), '%')
+		OR p.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR p.description LIKE CONCAT('%', CAST(? AS char), '%')
+	)
 `
 
-func (q *Queries) CountPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPermissionsByServiceID, serviceID)
+type CountPermissionsByServiceIDParams struct {
+	ServiceID sql.NullString `json:"serviceId"`
+	Search    interface{}    `json:"search"`
+}
+
+func (q *Queries) CountPermissionsByServiceID(ctx context.Context, arg CountPermissionsByServiceIDParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPermissionsByServiceID,
+		arg.ServiceID,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -342,8 +376,31 @@ SELECT
 FROM
 	permissions p
 	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	CAST(? AS char) IS NULL
+	OR p.code LIKE CONCAT('%', CAST(? AS char), '%')
+	OR p.name LIKE CONCAT('%', CAST(? AS char), '%')
+	OR p.description LIKE CONCAT('%', CAST(? AS char), '%')
+	OR s.name LIKE CONCAT('%', CAST(? AS char), '%')
 ORDER BY
-	p.created_at DESC
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -351,8 +408,11 @@ OFFSET
 `
 
 type ListPermissionsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Search  interface{} `json:"search"`
+	SortDir interface{} `json:"sortDir"`
+	SortBy  interface{} `json:"sortBy"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
 }
 
 type ListPermissionsRow struct {
@@ -365,8 +425,25 @@ type ListPermissionsRow struct {
 	ServiceName sql.NullString `json:"serviceName"`
 }
 
+// search: поиск по code/name/description/имени сервиса (LIKE, NULL — без фильтра).
+// sort_by/sort_dir: колонка (code/name/description/service_name/created_at,
+// иначе — created_at) и направление сортировки ("asc" — иначе "desc") задаются
+// в Go на белом списке (см. query.QuerySort), в SQL любое неизвестное значение
+// sort_by безопасно попадает в ветку ELSE.
 func (q *Queries) ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]ListPermissionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPermissions, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listPermissions,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -410,8 +487,31 @@ FROM
 	LEFT JOIN services s ON s.id = p.service_id
 WHERE
 	p.service_id = ?
+	AND (
+		CAST(? AS char) IS NULL
+		OR p.code LIKE CONCAT('%', CAST(? AS char), '%')
+		OR p.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR p.description LIKE CONCAT('%', CAST(? AS char), '%')
+	)
 ORDER BY
-	p.created_at DESC
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -420,6 +520,9 @@ OFFSET
 
 type ListPermissionsByServiceIDParams struct {
 	ServiceID sql.NullString `json:"serviceId"`
+	Search    interface{}    `json:"search"`
+	SortDir   interface{}    `json:"sortDir"`
+	SortBy    interface{}    `json:"sortBy"`
 	Limit     int32          `json:"limit"`
 	Offset    int32          `json:"offset"`
 }
@@ -435,7 +538,19 @@ type ListPermissionsByServiceIDRow struct {
 }
 
 func (q *Queries) ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]ListPermissionsByServiceIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listPermissionsByServiceID, arg.ServiceID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listPermissionsByServiceID,
+		arg.ServiceID,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

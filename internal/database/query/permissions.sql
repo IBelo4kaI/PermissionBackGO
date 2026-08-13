@@ -29,6 +29,11 @@ WHERE
 	p.code = ?;
 
 -- name: ListPermissions :many
+-- search: поиск по code/name/description/имени сервиса (LIKE, NULL — без фильтра).
+-- sort_by/sort_dir: колонка (code/name/description/service_name/created_at,
+-- иначе — created_at) и направление сортировки ("asc" — иначе "desc") задаются
+-- в Go на белом списке (см. query.QuerySort), в SQL любое неизвестное значение
+-- sort_by безопасно попадает в ветку ELSE.
 SELECT
 	p.id,
 	p.service_id,
@@ -40,8 +45,31 @@ SELECT
 FROM
 	permissions p
 	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	CAST(sqlc.narg (search) AS char) IS NULL
+	OR p.code LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR p.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR p.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR s.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 ORDER BY
-	p.created_at DESC
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'desc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -51,7 +79,14 @@ OFFSET
 SELECT
 	COUNT(*) AS total
 FROM
-	permissions;
+	permissions p
+	LEFT JOIN services s ON s.id = p.service_id
+WHERE
+	CAST(sqlc.narg (search) AS char) IS NULL
+	OR p.code LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR p.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR p.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR s.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%');
 
 -- name: ListPermissionsByServiceID :many
 SELECT
@@ -66,9 +101,32 @@ FROM
 	permissions p
 	LEFT JOIN services s ON s.id = p.service_id
 WHERE
-	p.service_id = ?
+	p.service_id = sqlc.arg (service_id)
+	AND (
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR p.code LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR p.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR p.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	)
 ORDER BY
-	p.created_at DESC
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'desc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'code' THEN CAST(p.code AS char)
+			WHEN 'name' THEN CAST(p.name AS char)
+			WHEN 'description' THEN CAST(p.description AS char)
+			WHEN 'service_name' THEN CAST(s.name AS char)
+			ELSE CAST(p.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -78,9 +136,15 @@ OFFSET
 SELECT
 	COUNT(*) AS total
 FROM
-	permissions
+	permissions p
 WHERE
-	service_id = ?;
+	p.service_id = sqlc.arg (service_id)
+	AND (
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR p.code LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR p.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR p.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	);
 
 -- name: ListPermissionsByUserID :many
 SELECT DISTINCT

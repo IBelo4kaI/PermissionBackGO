@@ -1,6 +1,9 @@
 package role
 
-import "time"
+import (
+	"permisson/internal/pkg/apidoc"
+	"time"
+)
 
 // service_name никогда не заполняется: в Python-версии поле есть в схеме,
 // но не наполняется ни в одном списковом эндпоинте (поведение сохранено 1:1).
@@ -40,6 +43,15 @@ type UpdateRoleRequest struct {
 	IsGlobal    bool    `json:"is_global"`
 }
 
+// ListRequest — query-параметры GET /roles/. Расширяет apidoc.Pagination
+// параметром is_global — фильтром "глобальная / привязанная к сервису роль"
+// (не задан — без фильтра). Биндинг всё так же вручную в хендлере
+// (query.QueryBoolPtr), тег нужен только для документации OpenAPI.
+type ListRequest struct {
+	apidoc.Pagination
+	IsGlobal *bool `query:"is_global" description:"true — только глобальные роли, false — только привязанные к сервису"`
+}
+
 type AddPermissionRequest struct {
 	RoleID string `json:"role_id"`
 	PermID string `json:"perm_id"`
@@ -49,7 +61,17 @@ type ListByServiceRequest struct {
 	ServiceID string `uri:"service_id"`
 	Page      int    `query:"page" validate:"omitempty,min=1"`
 	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	Search    string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/description"`
+	SortBy    string `query:"sort_by" description:"name, description или created_at (по умолчанию created_at)"`
+	SortDir   string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
 }
+
+// SortableColumns — белый список колонок для query-параметра sort_by
+// (см. query.QuerySort). service_name сюда не входит: в списковых
+// эндпоинтах он никогда не заполняется (см. RoleResponse).
+var SortableColumns = []string{"name", "description", "created_at"}
+
+const DefaultSortColumn = "created_at"
 
 type DeleteResponse struct {
 	Message string `json:"message"`
@@ -76,6 +98,7 @@ type UserRoleInfo struct {
 
 type DetailedResponse struct {
 	ID                   string                         `json:"id"`
+	ServiceID            *string                        `json:"service_id"`
 	Name                 string                         `json:"name"`
 	Description          string                         `json:"description"`
 	IsGlobal             bool                           `json:"is_global"`

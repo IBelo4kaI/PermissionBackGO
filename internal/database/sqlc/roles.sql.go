@@ -32,11 +32,32 @@ const countRoles = `-- name: CountRoles :one
 SELECT
 	COUNT(*) AS total
 FROM
-	roles
+	roles r
+WHERE
+	(
+		CAST(? AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(? AS char), '%')
+	)
+	AND (
+		? IS NULL
+		OR r.is_global = ?
+	)
 `
 
-func (q *Queries) CountRoles(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countRoles)
+type CountRolesParams struct {
+	Search   interface{}  `json:"search"`
+	IsGlobal sql.NullBool `json:"isGlobal"`
+}
+
+func (q *Queries) CountRoles(ctx context.Context, arg CountRolesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRoles,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.IsGlobal,
+		arg.IsGlobal,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -46,13 +67,28 @@ const countRolesByServiceID = `-- name: CountRolesByServiceID :one
 SELECT
 	COUNT(*) AS total
 FROM
-	roles
+	roles r
 WHERE
-	service_id = ?
+	r.service_id = ?
+	AND (
+		CAST(? AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(? AS char), '%')
+	)
 `
 
-func (q *Queries) CountRolesByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countRolesByServiceID, serviceID)
+type CountRolesByServiceIDParams struct {
+	ServiceID sql.NullString `json:"serviceId"`
+	Search    interface{}    `json:"search"`
+}
+
+func (q *Queries) CountRolesByServiceID(ctx context.Context, arg CountRolesByServiceIDParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countRolesByServiceID,
+		arg.ServiceID,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -320,8 +356,31 @@ FROM
 		GROUP BY
 			role_id
 	) pc ON pc.role_id = r.id
+WHERE
+	(
+		CAST(? AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(? AS char), '%')
+	)
+	AND (
+		? IS NULL
+		OR r.is_global = ?
+	)
 ORDER BY
-	r.created_at DESC
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -329,8 +388,12 @@ OFFSET
 `
 
 type ListRolesWithCountsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Search   interface{}  `json:"search"`
+	IsGlobal sql.NullBool `json:"isGlobal"`
+	SortDir  interface{}  `json:"sortDir"`
+	SortBy   interface{}  `json:"sortBy"`
+	Limit    int32        `json:"limit"`
+	Offset   int32        `json:"offset"`
 }
 
 type ListRolesWithCountsRow struct {
@@ -344,8 +407,23 @@ type ListRolesWithCountsRow struct {
 	PermissionCount int64          `json:"permissionCount"`
 }
 
+// search: поиск по name/description. is_global: true/false — фильтр по
+// колонке is_global (NULL/не передан — без фильтра). sort_by: name/description
+// /created_at (иначе created_at), sort_dir: asc (иначе desc) — см. query.QuerySort.
 func (q *Queries) ListRolesWithCounts(ctx context.Context, arg ListRolesWithCountsParams) ([]ListRolesWithCountsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRolesWithCounts, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listRolesWithCounts,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.IsGlobal,
+		arg.IsGlobal,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -408,8 +486,26 @@ FROM
 	) pc ON pc.role_id = r.id
 WHERE
 	r.service_id = ?
+	AND (
+		CAST(? AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(? AS char), '%')
+	)
 ORDER BY
-	r.created_at DESC
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -418,6 +514,9 @@ OFFSET
 
 type ListRolesWithCountsByServiceIDParams struct {
 	ServiceID sql.NullString `json:"serviceId"`
+	Search    interface{}    `json:"search"`
+	SortDir   interface{}    `json:"sortDir"`
+	SortBy    interface{}    `json:"sortBy"`
 	Limit     int32          `json:"limit"`
 	Offset    int32          `json:"offset"`
 }
@@ -434,7 +533,18 @@ type ListRolesWithCountsByServiceIDRow struct {
 }
 
 func (q *Queries) ListRolesWithCountsByServiceID(ctx context.Context, arg ListRolesWithCountsByServiceIDParams) ([]ListRolesWithCountsByServiceIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listRolesWithCountsByServiceID, arg.ServiceID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listRolesWithCountsByServiceID,
+		arg.ServiceID,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

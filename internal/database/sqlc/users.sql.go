@@ -32,11 +32,27 @@ const countUsers = `-- name: CountUsers :one
 SELECT
 	COUNT(*) AS total
 FROM
-	users
+	users u
+WHERE
+	CAST(? AS char) IS NULL
+	OR u.name LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
 `
 
-func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUsers)
+type CountUsersParams struct {
+	Search interface{} `json:"search"`
+}
+
+func (q *Queries) CountUsers(ctx context.Context, arg CountUsersParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsers,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -51,10 +67,29 @@ FROM
 	JOIN roles r ON r.id = ur.role_id
 WHERE
 	r.service_id = ?
+	AND (
+		CAST(? AS char) IS NULL
+		OR u.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
+	)
 `
 
-func (q *Queries) CountUsersByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUsersByServiceID, serviceID)
+type CountUsersByServiceIDParams struct {
+	ServiceID sql.NullString `json:"serviceId"`
+	Search    interface{}    `json:"search"`
+}
+
+func (q *Queries) CountUsersByServiceID(ctx context.Context, arg CountUsersByServiceIDParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsersByServiceID,
+		arg.ServiceID,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -326,9 +361,36 @@ SELECT
 	status,
 	created_at
 FROM
-	users
+	users u
+WHERE
+	CAST(? AS char) IS NULL
+	OR u.name LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
 ORDER BY
-	created_at DESC
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -336,8 +398,11 @@ OFFSET
 `
 
 type ListUsersParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Search  interface{} `json:"search"`
+	SortDir interface{} `json:"sortDir"`
+	SortBy  interface{} `json:"sortBy"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
 }
 
 type ListUsersRow struct {
@@ -353,8 +418,23 @@ type ListUsersRow struct {
 	CreatedAt  time.Time      `json:"createdAt"`
 }
 
+// search: поиск по name/surname/patronymic/username. sort_by: name/surname/
+// patronymic/username/birthday/status/created_at (иначе created_at),
+// sort_dir: asc (иначе desc) — см. query.QuerySort.
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listUsers,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -405,8 +485,36 @@ FROM
 	JOIN roles r ON r.id = ur.role_id
 WHERE
 	r.service_id = ?
+	AND (
+		CAST(? AS char) IS NULL
+		OR u.name LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
+	)
 ORDER BY
-	u.created_at DESC
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -415,6 +523,9 @@ OFFSET
 
 type ListUsersByServiceIDParams struct {
 	ServiceID sql.NullString `json:"serviceId"`
+	Search    interface{}    `json:"search"`
+	SortDir   interface{}    `json:"sortDir"`
+	SortBy    interface{}    `json:"sortBy"`
 	Limit     int32          `json:"limit"`
 	Offset    int32          `json:"offset"`
 }
@@ -433,7 +544,20 @@ type ListUsersByServiceIDRow struct {
 }
 
 func (q *Queries) ListUsersByServiceID(ctx context.Context, arg ListUsersByServiceIDParams) ([]ListUsersByServiceIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsersByServiceID, arg.ServiceID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listUsersByServiceID,
+		arg.ServiceID,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -33,6 +33,9 @@ WHERE
 	username = ?;
 
 -- name: ListUsers :many
+-- search: поиск по name/surname/patronymic/username. sort_by: name/surname/
+-- patronymic/username/birthday/status/created_at (иначе created_at),
+-- sort_dir: asc (иначе desc) — см. query.QuerySort.
 SELECT
 	id,
 	name,
@@ -45,9 +48,36 @@ SELECT
 	status,
 	created_at
 FROM
-	users
+	users u
+WHERE
+	CAST(sqlc.narg (search) AS char) IS NULL
+	OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 ORDER BY
-	created_at DESC
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'desc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -57,7 +87,13 @@ OFFSET
 SELECT
 	COUNT(*) AS total
 FROM
-	users;
+	users u
+WHERE
+	CAST(sqlc.narg (search) AS char) IS NULL
+	OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%');
 
 -- name: ListAllUsers :many
 SELECT
@@ -93,9 +129,37 @@ FROM
 	JOIN user_roles ur ON ur.user_id = u.id
 	JOIN roles r ON r.id = ur.role_id
 WHERE
-	r.service_id = ?
+	r.service_id = sqlc.arg (service_id)
+	AND (
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	)
 ORDER BY
-	u.created_at DESC
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'desc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(u.name AS char)
+			WHEN 'surname' THEN CAST(u.surname AS char)
+			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
+			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'birthday' THEN CAST(u.birthday AS char)
+			WHEN 'status' THEN CAST(u.status AS char)
+			ELSE CAST(u.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -109,7 +173,14 @@ FROM
 	JOIN user_roles ur ON ur.user_id = u.id
 	JOIN roles r ON r.id = ur.role_id
 WHERE
-	r.service_id = ?;
+	r.service_id = sqlc.arg (service_id)
+	AND (
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	);
 
 -- name: CreateUser :exec
 INSERT INTO

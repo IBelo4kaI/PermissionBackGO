@@ -32,7 +32,17 @@ OFFSET
 SELECT
 	COUNT(*) AS total
 FROM
-	roles;
+	roles r
+WHERE
+	(
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	)
+	AND (
+		sqlc.narg (is_global) IS NULL
+		OR r.is_global = sqlc.narg (is_global)
+	);
 
 -- name: ListRolesByServiceID :many
 SELECT
@@ -57,11 +67,19 @@ OFFSET
 SELECT
 	COUNT(*) AS total
 FROM
-	roles
+	roles r
 WHERE
-	service_id = ?;
+	r.service_id = sqlc.arg (service_id)
+	AND (
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	);
 
 -- name: ListRolesWithCounts :many
+-- search: поиск по name/description. is_global: true/false — фильтр по
+-- колонке is_global (NULL/не передан — без фильтра). sort_by: name/description
+-- /created_at (иначе created_at), sort_dir: asc (иначе desc) — см. query.QuerySort.
 SELECT
 	r.id,
 	r.service_id,
@@ -91,8 +109,31 @@ FROM
 		GROUP BY
 			role_id
 	) pc ON pc.role_id = r.id
+WHERE
+	(
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	)
+	AND (
+		sqlc.narg (is_global) IS NULL
+		OR r.is_global = sqlc.narg (is_global)
+	)
 ORDER BY
-	r.created_at DESC
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'desc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET
@@ -129,9 +170,27 @@ FROM
 			role_id
 	) pc ON pc.role_id = r.id
 WHERE
-	r.service_id = ?
+	r.service_id = sqlc.arg (service_id)
+	AND (
+		CAST(sqlc.narg (search) AS char) IS NULL
+		OR r.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR r.description LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	)
 ORDER BY
-	r.created_at DESC
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'desc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
+			WHEN 'name' THEN CAST(r.name AS char)
+			WHEN 'description' THEN CAST(r.description AS char)
+			ELSE CAST(r.created_at AS char)
+		END
+	END DESC
 LIMIT
 	?
 OFFSET

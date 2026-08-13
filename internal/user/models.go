@@ -75,10 +75,29 @@ type ListByServiceRequest struct {
 	ServiceID string `uri:"service_id"`
 	Page      int    `query:"page" validate:"omitempty,min=1"`
 	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	Search    string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/surname/patronymic/username"`
+	SortBy    string `query:"sort_by" description:"name, surname, patronymic, username, birthday, status или created_at (по умолчанию created_at)"`
+	SortDir   string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
 }
+
+// SortableColumns — белый список для sort_by в List/ListByServiceID (см. query.QuerySort).
+var SortableColumns = []string{"name", "surname", "patronymic", "username", "birthday", "status", "created_at"}
+
+const DefaultSortColumn = "created_at"
 
 type MePermissionsRequest struct {
 	ServiceID string `uri:"service_id"`
+	Search    string `query:"search" validate:"omitempty,max=255" description:"Поиск по code/name/description"`
+	SortBy    string `query:"sort_by" description:"code, name, description или created_at (по умолчанию created_at)"`
+	SortDir   string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
+}
+
+// ListAllRequest — query-параметры GET /users/all. Список без пагинации,
+// поэтому search/sort применяются на срезе в Go (см. Service.ListAll).
+type ListAllRequest struct {
+	Search  string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/surname/patronymic/username"`
+	SortBy  string `query:"sort_by" description:"name, surname, patronymic, username, birthday, status или created_at (по умолчанию created_at)"`
+	SortDir string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
 }
 
 type DeleteResponse struct {

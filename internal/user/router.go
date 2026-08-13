@@ -1,6 +1,7 @@
 package user
 
 import (
+	repo "permisson/internal/database/sqlc"
 	middlewares "permisson/internal/middleware"
 	"permisson/internal/permission"
 	"permisson/internal/pkg/apidoc"
@@ -30,7 +31,7 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 			Tags:        []string{"Пользователи"},
 		}))
 
-	ftonic.For[apidoc.Empty, []UserResponse](schema).
+	ftonic.For[ListAllRequest, []UserResponse](schema).
 		GET(group, "/all", require("users", "read_all"), h.ListAll, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список пользователей без пагинации",
 			Description: "Требует users:read_all.",
@@ -91,5 +92,14 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 			Summary:     "Удалить роль у пользователя",
 			Description: "Требует users.roles:edit.",
 			Tags:        []string{"Пользователи"},
+		}))
+
+	// Справочник полов — отдельная от /users группа (как /api/as/genders
+	// в клиентах). Без require: справочные данные, не персональные.
+	genders := router.Group("/genders")
+	ftonic.For[apidoc.Empty, []repo.Gender](schema).
+		GET(genders, "/", h.ListGenders, ftonic.WithOperation(docs.OperationObject{
+			Summary: "Получить список полов (справочник)",
+			Tags:    []string{"Пользователи"},
 		}))
 }

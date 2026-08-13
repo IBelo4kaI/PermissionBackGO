@@ -24,8 +24,10 @@ func NewHandler(service *Service, authService *auth.Service) *Handler {
 func (h *Handler) List(c fiber.Ctx) error {
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 10)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, SortableColumns, DefaultSortColumn)
 
-	services, err := h.service.List(c.Context(), page, limit)
+	services, err := h.service.List(c.Context(), page, limit, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
@@ -79,7 +81,10 @@ func (h *Handler) ListUserAccessible(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, "Невалидная сессия")
 	}
 
-	items, err := h.service.ListAccessibleForUser(c.Context(), userID)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, AccessibleSortableColumns, AccessibleDefaultSortColumn)
+
+	items, err := h.service.ListAccessibleForUser(c.Context(), userID, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}

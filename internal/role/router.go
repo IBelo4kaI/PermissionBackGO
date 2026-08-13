@@ -2,7 +2,6 @@ package role
 
 import (
 	middlewares "permisson/internal/middleware"
-	"permisson/internal/pkg/apidoc"
 	"permisson/internal/pkg/response"
 
 	ftonic "github.com/TickLabVN/tonic/adapters/fiber"
@@ -13,7 +12,7 @@ import (
 func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, require middlewares.Require) {
 	group := router.Group("/roles")
 
-	ftonic.For[apidoc.Pagination, response.Page[RoleResponse]](schema).
+	ftonic.For[ListRequest, response.Page[RoleResponse]](schema).
 		GET(group, "/", require("roles", "read"), h.List, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список ролей",
 			Description: "Требует roles:read.",

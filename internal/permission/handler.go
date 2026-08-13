@@ -20,8 +20,10 @@ func NewHandler(service *Service) *Handler {
 func (h *Handler) List(c fiber.Ctx) error {
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 10)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, SortableColumns, DefaultSortColumn)
 
-	permissions, err := h.service.List(c.Context(), page, limit)
+	permissions, err := h.service.List(c.Context(), page, limit, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
@@ -33,8 +35,10 @@ func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 	serviceID := c.Params("service_id")
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 10)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, SortableColumns, DefaultSortColumn)
 
-	items, err := h.service.ListByServiceID(c.Context(), serviceID, page, limit)
+	items, err := h.service.ListByServiceID(c.Context(), serviceID, page, limit, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}

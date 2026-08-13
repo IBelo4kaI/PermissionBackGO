@@ -59,3 +59,23 @@ type AccessResponse struct {
 	URL         *string `json:"url,omitempty"`
 	Theme       *string `json:"theme,omitempty"`
 }
+
+// ListUserAccessibleRequest — query-параметры GET /services/user-accessible.
+// Список небольшой (сервисы, доступные конкретному пользователю) и без
+// пагинации, поэтому поиск и сортировка применяются на стороне Go, а не в SQL
+// (см. Service.ListAccessibleForUser).
+type ListUserAccessibleRequest struct {
+	Search  string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/description"`
+	SortBy  string `query:"sort_by" description:"name или description (по умолчанию name)"`
+	SortDir string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
+}
+
+// SortableColumns — белый список для sort_by в GET /services/ (см. query.QuerySort).
+var SortableColumns = []string{"name", "description", "prefix", "created_at"}
+
+const DefaultSortColumn = "created_at"
+
+// AccessibleSortableColumns — белый список для sort_by в GET /services/user-accessible.
+var AccessibleSortableColumns = []string{"name", "description"}
+
+const AccessibleDefaultSortColumn = "name"

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -19,23 +21,32 @@ type Service struct {
 	queries repo.Querier
 }
 
+// ListGenders — справочник полов для формы создания/редактирования
+// пользователя. Без пагинации: справочник маленький и статичный.
+func (s *Service) ListGenders(ctx context.Context) ([]repo.Gender, error) {
+	return s.queries.ListGenders(ctx)
+}
+
 func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[UserResponse], error) {
+func (s *Service) List(ctx context.Context, page, limit int, search *string, sortBy, sortDir string) (*response.Page[UserResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
 	rows, err := s.queries.ListUsers(ctx, repo.ListUsersParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Search:  search,
+		SortBy:  sortBy,
+		SortDir: sortDir,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := s.queries.CountUsers(ctx)
+	total, err := s.queries.CountUsers(ctx, repo.CountUsersParams{Search: search})
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +69,15 @@ func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Use
 	}, nil
 }
 
-func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) (*response.Page[UserResponse], error) {
+func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int, search *string, sortBy, sortDir string) (*response.Page[UserResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
 	rows, err := s.queries.ListUsersByServiceID(ctx, repo.ListUsersByServiceIDParams{
 		ServiceID: nullable.String(serviceID),
+		Search:    search,
+		SortBy:    sortBy,
+		SortDir:   sortDir,
 		Limit:     int32(limit),
 		Offset:    int32(offset),
 	})
@@ -71,7 +85,10 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 		return nil, err
 	}
 
-	total, err := s.queries.CountUsersByServiceID(ctx, nullable.String(serviceID))
+	total, err := s.queries.CountUsersByServiceID(ctx, repo.CountUsersByServiceIDParams{
+		ServiceID: nullable.String(serviceID),
+		Search:    search,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -94,15 +111,27 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 	}, nil
 }
 
-func (s *Service) ListAll(ctx context.Context) ([]UserResponse, error) {
+// ListAll: список без пагинации (весь users), поэтому search/sort применяются
+// в Go до сборки ответа — так и фильтрация корректна (нет LIMIT/OFFSET, с
+// которым её нужно было бы согласовывать), и N+1 запросы gender/roles в
+// buildResponse не тратятся на строки, которые всё равно отфильтруются.
+func (s *Service) ListAll(ctx context.Context, search *string, sortBy, sortDir string) ([]UserResponse, error) {
 	rows, err := s.queries.ListAllUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	items := make([]UserResponse, 0, len(rows))
+	all := make([]userRow, 0, len(rows))
 	for _, r := range rows {
-		resp, err := s.buildResponse(ctx, fromListAllUsersRow(r))
+		all = append(all, fromListAllUsersRow(r))
+	}
+
+	all = filterUserRows(all, search)
+	sortUserRows(all, sortBy, sortDir)
+
+	items := make([]UserResponse, 0, len(all))
+	for _, u := range all {
+		resp, err := s.buildResponse(ctx, u)
 		if err != nil {
 			return nil, err
 		}
@@ -292,7 +321,12 @@ func (s *Service) RemoveRole(ctx context.Context, userID, roleID string) (UserRe
 // MePermissions — разрешения текущего пользователя для сервиса, с учётом
 // wildcard-кодов вида "all:all:all" и "<service_name>:all:all".
 // Если сервис не найден — пустой список (как в Python-версии).
-func (s *Service) MePermissions(ctx context.Context, userID, serviceID string) ([]permission.Permission, error) {
+//
+// search/sort — как в ListAll: запрос ListPermissionsByUserIDAndServiceID
+// используется и авторизационным middleware (permission.ListForUserAndService),
+// поэтому фильтр/сортировку не добавляем в сам SQL-запрос, а применяем в Go
+// только здесь, к уже полученному (обычно небольшому) списку.
+func (s *Service) MePermissions(ctx context.Context, userID, serviceID string, search *string, sortBy, sortDir string) ([]permission.Permission, error) {
 	svc, err := s.queries.GetServiceByID(ctx, serviceID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -321,6 +355,10 @@ func (s *Service) MePermissions(ctx context.Context, userID, serviceID string) (
 			CreatedAt:   r.CreatedAt,
 		})
 	}
+
+	items = filterPermissions(items, search)
+	sortPermissions(items, sortBy, sortDir)
+
 	return items, nil
 }
 
@@ -369,4 +407,92 @@ func (s *Service) buildResponseByService(ctx context.Context, u userRow, service
 	}
 
 	return fromUserRow(u, gender, filtered), nil
+}
+
+// filterUserRows — регистронезависимый поиск по name/surname/patronymic/
+// username. Используется там, где список пользователей не пагинируется в SQL
+// (ListAll) — поэтому фильтрация безопасно выполняется в Go после выборки.
+func filterUserRows(rows []userRow, search *string) []userRow {
+	if search == nil {
+		return rows
+	}
+	needle := strings.ToLower(*search)
+	filtered := make([]userRow, 0, len(rows))
+	for _, r := range rows {
+		if strings.Contains(strings.ToLower(r.Name), needle) ||
+			strings.Contains(strings.ToLower(r.Surname), needle) ||
+			strings.Contains(strings.ToLower(r.Patronymic.String), needle) ||
+			strings.Contains(strings.ToLower(r.Username), needle) {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
+}
+
+// sortUserRows сортирует rows "на месте" по одной из user.SortableColumns.
+func sortUserRows(rows []userRow, sortBy, sortDir string) {
+	less := func(i, j int) bool {
+		switch sortBy {
+		case "name":
+			return rows[i].Name < rows[j].Name
+		case "surname":
+			return rows[i].Surname < rows[j].Surname
+		case "patronymic":
+			return rows[i].Patronymic.String < rows[j].Patronymic.String
+		case "username":
+			return rows[i].Username < rows[j].Username
+		case "birthday":
+			return rows[i].Birthday.Before(rows[j].Birthday)
+		case "status":
+			return rows[i].Status < rows[j].Status
+		default: // "created_at" и любое неизвестное значение
+			return rows[i].CreatedAt.Before(rows[j].CreatedAt)
+		}
+	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		if sortDir == "asc" {
+			return less(i, j)
+		}
+		return less(j, i)
+	})
+}
+
+// filterPermissions — регистронезависимый поиск по code/name/description.
+// Используется в MePermissions, где список не пагинируется в SQL.
+func filterPermissions(items []permission.Permission, search *string) []permission.Permission {
+	if search == nil {
+		return items
+	}
+	needle := strings.ToLower(*search)
+	filtered := make([]permission.Permission, 0, len(items))
+	for _, p := range items {
+		if strings.Contains(strings.ToLower(p.Code), needle) ||
+			strings.Contains(strings.ToLower(p.Name), needle) ||
+			strings.Contains(strings.ToLower(p.Description), needle) {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered
+}
+
+// sortPermissions сортирует items "на месте" по code/name/description/created_at.
+func sortPermissions(items []permission.Permission, sortBy, sortDir string) {
+	less := func(i, j int) bool {
+		switch sortBy {
+		case "code":
+			return items[i].Code < items[j].Code
+		case "name":
+			return items[i].Name < items[j].Name
+		case "description":
+			return items[i].Description < items[j].Description
+		default: // "created_at" и любое неизвестное значение
+			return items[i].CreatedAt.Before(items[j].CreatedAt)
+		}
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		if sortDir == "asc" {
+			return less(i, j)
+		}
+		return less(j, i)
+	})
 }

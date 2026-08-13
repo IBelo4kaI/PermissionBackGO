@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"permisson/internal/auth"
+	"permisson/internal/permission"
 	"permisson/internal/pkg/query"
 )
 
@@ -21,11 +22,21 @@ func NewHandler(service *Service, authService *auth.Service) *Handler {
 	}
 }
 
+func (h *Handler) ListGenders(c fiber.Ctx) error {
+	genders, err := h.service.ListGenders(c.Context())
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+	return c.JSON(genders)
+}
+
 func (h *Handler) List(c fiber.Ctx) error {
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 10)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, SortableColumns, DefaultSortColumn)
 
-	users, err := h.service.List(c.Context(), page, limit)
+	users, err := h.service.List(c.Context(), page, limit, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
@@ -36,8 +47,10 @@ func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 	serviceID := c.Params("service_id")
 	page := query.QueryInt(c, "page", 1)
 	limit := query.QueryInt(c, "limit", 50)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, SortableColumns, DefaultSortColumn)
 
-	users, err := h.service.ListByServiceID(c.Context(), serviceID, page, limit)
+	users, err := h.service.ListByServiceID(c.Context(), serviceID, page, limit, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
@@ -45,7 +58,10 @@ func (h *Handler) ListByServiceID(c fiber.Ctx) error {
 }
 
 func (h *Handler) ListAll(c fiber.Ctx) error {
-	users, err := h.service.ListAll(c.Context())
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, SortableColumns, DefaultSortColumn)
+
+	users, err := h.service.ListAll(c.Context(), search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
@@ -80,7 +96,10 @@ func (h *Handler) MePermissions(c fiber.Ctx) error {
 	}
 
 	serviceID := c.Params("service_id")
-	permissions, err := h.service.MePermissions(c.Context(), userID, serviceID)
+	search := query.QuerySearch(c)
+	sortBy, sortDir := query.QuerySort(c, permission.SortableColumns, permission.DefaultSortColumn)
+
+	permissions, err := h.service.MePermissions(c.Context(), userID, serviceID, search, sortBy, sortDir)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}

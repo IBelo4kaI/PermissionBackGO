@@ -37,7 +37,18 @@ type ListByServiceRequest struct {
 	ServiceID string `uri:"service_id"`
 	Page      int    `query:"page" validate:"omitempty,min=1"`
 	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	Search    string `query:"search" validate:"omitempty,max=255" description:"Поиск по code/name/description"`
+	SortBy    string `query:"sort_by" description:"code, name, description или created_at (по умолчанию created_at)"`
+	SortDir   string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
 }
+
+// SortableColumns — белый список колонок, допустимых в query-параметре
+// sort_by для List/ListByServiceID (см. query.QuerySort). service_name
+// не участвует в ListByServiceID (там service_id фиксирован), но лишний
+// вариант там не вредит — просто не даёт видимого эффекта.
+var SortableColumns = []string{"code", "name", "description", "service_name", "created_at"}
+
+const DefaultSortColumn = "created_at"
 
 type DeleteResponse struct {
 	Message string `json:"message"`

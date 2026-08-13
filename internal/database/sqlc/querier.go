@@ -12,13 +12,13 @@ import (
 type Querier interface {
 	AddPermissionToRole(ctx context.Context, arg AddPermissionToRoleParams) error
 	AddRoleToUser(ctx context.Context, arg AddRoleToUserParams) error
-	CountPermissions(ctx context.Context) (int64, error)
-	CountPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error)
-	CountRoles(ctx context.Context) (int64, error)
-	CountRolesByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error)
-	CountServices(ctx context.Context) (int64, error)
-	CountUsers(ctx context.Context) (int64, error)
-	CountUsersByServiceID(ctx context.Context, serviceID sql.NullString) (int64, error)
+	CountPermissions(ctx context.Context, arg CountPermissionsParams) (int64, error)
+	CountPermissionsByServiceID(ctx context.Context, arg CountPermissionsByServiceIDParams) (int64, error)
+	CountRoles(ctx context.Context, arg CountRolesParams) (int64, error)
+	CountRolesByServiceID(ctx context.Context, arg CountRolesByServiceIDParams) (int64, error)
+	CountServices(ctx context.Context, arg CountServicesParams) (int64, error)
+	CountUsers(ctx context.Context, arg CountUsersParams) (int64, error)
+	CountUsersByServiceID(ctx context.Context, arg CountUsersByServiceIDParams) (int64, error)
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) error
 	CreateRole(ctx context.Context, arg CreateRoleParams) error
 	CreateService(ctx context.Context, arg CreateServiceParams) error
@@ -52,6 +52,11 @@ type Querier interface {
 	ListAllPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) ([]ListAllPermissionsByServiceIDRow, error)
 	ListAllUsers(ctx context.Context) ([]ListAllUsersRow, error)
 	ListGenders(ctx context.Context) ([]Gender, error)
+	// search: поиск по code/name/description/имени сервиса (LIKE, NULL — без фильтра).
+	// sort_by/sort_dir: колонка (code/name/description/service_name/created_at,
+	// иначе — created_at) и направление сортировки ("asc" — иначе "desc") задаются
+	// в Go на белом списке (см. query.QuerySort), в SQL любое неизвестное значение
+	// sort_by безопасно попадает в ветку ELSE.
 	ListPermissions(ctx context.Context, arg ListPermissionsParams) ([]ListPermissionsRow, error)
 	ListPermissionsByServiceID(ctx context.Context, arg ListPermissionsByServiceIDParams) ([]ListPermissionsByServiceIDRow, error)
 	ListPermissionsByUserID(ctx context.Context, userID string) ([]Permission, error)
@@ -63,13 +68,21 @@ type Querier interface {
 	ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, error)
 	ListRolesByServiceID(ctx context.Context, arg ListRolesByServiceIDParams) ([]Role, error)
 	ListRolesForUser(ctx context.Context, userID string) ([]Role, error)
+	// search: поиск по name/description. is_global: true/false — фильтр по
+	// колонке is_global (NULL/не передан — без фильтра). sort_by: name/description
+	// /created_at (иначе created_at), sort_dir: asc (иначе desc) — см. query.QuerySort.
 	ListRolesWithCounts(ctx context.Context, arg ListRolesWithCountsParams) ([]ListRolesWithCountsRow, error)
 	ListRolesWithCountsByServiceID(ctx context.Context, arg ListRolesWithCountsByServiceIDParams) ([]ListRolesWithCountsByServiceIDRow, error)
+	// search: поиск по name/description/prefix. sort_by: name/description/prefix/
+	// created_at (иначе created_at), sort_dir: asc (иначе desc) — см. query.QuerySort.
 	ListServices(ctx context.Context, arg ListServicesParams) ([]ListServicesRow, error)
 	// Сервисы, доступные пользователю через его роли:
 	// либо роль привязана к конкретному сервису, либо роль глобальная (service_id IS NULL).
 	ListServicesByUserID(ctx context.Context, userID string) ([]ListServicesByUserIDRow, error)
 	ListUsedPermissionIDsForRole(ctx context.Context, roleID string) ([]string, error)
+	// search: поиск по name/surname/patronymic/username. sort_by: name/surname/
+	// patronymic/username/birthday/status/created_at (иначе created_at),
+	// sort_dir: asc (иначе desc) — см. query.QuerySort.
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	ListUsersByServiceID(ctx context.Context, arg ListUsersByServiceIDParams) ([]ListUsersByServiceIDRow, error)
 	ListUsersWithRole(ctx context.Context, roleID string) ([]ListUsersWithRoleRow, error)

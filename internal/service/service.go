@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"sort"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -22,19 +24,22 @@ func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[ServiceResponse], error) {
+func (s *Service) List(ctx context.Context, page, limit int, search *string, sortBy, sortDir string) (*response.Page[ServiceResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
 	rows, err := s.queries.ListServices(ctx, repo.ListServicesParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Search:  search,
+		SortBy:  sortBy,
+		SortDir: sortDir,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := s.queries.CountServices(ctx)
+	total, err := s.queries.CountServices(ctx, repo.CountServicesParams{Search: search})
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +48,7 @@ func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Ser
 	for _, r := range rows {
 		// permissions_count считается отдельным запросом на каждый элемент списка
 		// (как ленивая ORM-загрузка .permissions в Python-версии).
-		count, err := s.queries.CountPermissionsByServiceID(ctx, nullable.String(r.ID))
+		count, err := s.queries.CountPermissionsByServiceID(ctx, repo.CountPermissionsByServiceIDParams{ServiceID: nullable.String(r.ID)})
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +75,7 @@ func (s *Service) GetByID(ctx context.Context, id string) (ServiceResponse, erro
 		return ServiceResponse{}, err
 	}
 
-	count, err := s.queries.CountPermissionsByServiceID(ctx, nullable.String(id))
+	count, err := s.queries.CountPermissionsByServiceID(ctx, repo.CountPermissionsByServiceIDParams{ServiceID: nullable.String(id)})
 	if err != nil {
 		return ServiceResponse{}, err
 	}
@@ -118,7 +123,11 @@ func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (Ser
 	return s.GetByID(ctx, id)
 }
 
-func (s *Service) ListAccessibleForUser(ctx context.Context, userID string) ([]AccessResponse, error) {
+// ListAccessibleForUser: список небольшой и без пагинации (сервисы,
+// доступные конкретному пользователю), поэтому search/sort применяются
+// на срезе в Go, а не в SQL — в отличие от List, здесь не нужно согласовывать
+// фильтр с LIMIT/OFFSET.
+func (s *Service) ListAccessibleForUser(ctx context.Context, userID string, search *string, sortBy, sortDir string) ([]AccessResponse, error) {
 	rows, err := s.queries.ListServicesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -135,6 +144,32 @@ func (s *Service) ListAccessibleForUser(ctx context.Context, userID string) ([]A
 			Theme:       nullable.StringOrNil(r.Theme),
 		})
 	}
+
+	if search != nil {
+		needle := strings.ToLower(*search)
+		filtered := make([]AccessResponse, 0, len(items))
+		for _, it := range items {
+			if strings.Contains(strings.ToLower(it.Name), needle) ||
+				strings.Contains(strings.ToLower(it.Description), needle) {
+				filtered = append(filtered, it)
+			}
+		}
+		items = filtered
+	}
+
+	key := func(a AccessResponse) string {
+		if sortBy == "description" {
+			return a.Description
+		}
+		return a.Name
+	}
+	sort.SliceStable(items, func(i, j int) bool {
+		if sortDir == "asc" {
+			return key(items[i]) < key(items[j])
+		}
+		return key(items[i]) > key(items[j])
+	})
+
 	return items, nil
 }
 

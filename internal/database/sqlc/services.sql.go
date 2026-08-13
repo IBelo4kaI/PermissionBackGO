@@ -13,11 +13,25 @@ import (
 
 const countServices = `-- name: CountServices :one
 SELECT COUNT(*) AS total
-FROM services
+FROM services s
+WHERE
+	CAST(? AS char) IS NULL
+	OR s.name LIKE CONCAT('%', CAST(? AS char), '%')
+	OR s.description LIKE CONCAT('%', CAST(? AS char), '%')
+	OR s.prefix LIKE CONCAT('%', CAST(? AS char), '%')
 `
 
-func (q *Queries) CountServices(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countServices)
+type CountServicesParams struct {
+	Search interface{} `json:"search"`
+}
+
+func (q *Queries) CountServices(ctx context.Context, arg CountServicesParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countServices,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+	)
 	var total int64
 	err := row.Scan(&total)
 	return total, err
@@ -133,14 +147,38 @@ func (q *Queries) GetServiceByID(ctx context.Context, id string) (GetServiceByID
 
 const listServices = `-- name: ListServices :many
 SELECT id, name, description, image_url, url, theme, prefix, api_key_hash, created_at
-FROM services
-ORDER BY created_at DESC
+FROM services s
+WHERE
+	CAST(? AS char) IS NULL
+	OR s.name LIKE CONCAT('%', CAST(? AS char), '%')
+	OR s.description LIKE CONCAT('%', CAST(? AS char), '%')
+	OR s.prefix LIKE CONCAT('%', CAST(? AS char), '%')
+ORDER BY
+	CASE
+		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(s.name AS char)
+			WHEN 'description' THEN CAST(s.description AS char)
+			WHEN 'prefix' THEN CAST(s.prefix AS char)
+			ELSE CAST(s.created_at AS char)
+		END
+	END ASC,
+	CASE
+		WHEN CAST(? AS char) = 'desc' THEN CASE CAST(? AS char)
+			WHEN 'name' THEN CAST(s.name AS char)
+			WHEN 'description' THEN CAST(s.description AS char)
+			WHEN 'prefix' THEN CAST(s.prefix AS char)
+			ELSE CAST(s.created_at AS char)
+		END
+	END DESC
 LIMIT ? OFFSET ?
 `
 
 type ListServicesParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Search  interface{} `json:"search"`
+	SortDir interface{} `json:"sortDir"`
+	SortBy  interface{} `json:"sortBy"`
+	Limit   int32       `json:"limit"`
+	Offset  int32       `json:"offset"`
 }
 
 type ListServicesRow struct {
@@ -155,8 +193,21 @@ type ListServicesRow struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 }
 
+// search: поиск по name/description/prefix. sort_by: name/description/prefix/
+// created_at (иначе created_at), sort_dir: asc (иначе desc) — см. query.QuerySort.
 func (q *Queries) ListServices(ctx context.Context, arg ListServicesParams) ([]ListServicesRow, error) {
-	rows, err := q.db.QueryContext(ctx, listServices, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listServices,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.Search,
+		arg.SortDir,
+		arg.SortBy,
+		arg.SortDir,
+		arg.SortBy,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}

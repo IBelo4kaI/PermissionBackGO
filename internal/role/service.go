@@ -26,19 +26,26 @@ func NewService(queries repo.Querier) *Service {
 	return &Service{queries: queries}
 }
 
-func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[RoleResponse], error) {
+func (s *Service) List(ctx context.Context, page, limit int, search *string, sortBy, sortDir string, isGlobal *bool) (*response.Page[RoleResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
 	rows, err := s.queries.ListRolesWithCounts(ctx, repo.ListRolesWithCountsParams{
-		Limit:  int32(limit),
-		Offset: int32(offset),
+		Search:   search,
+		IsGlobal: nullable.BoolPtr(isGlobal),
+		SortBy:   sortBy,
+		SortDir:  sortDir,
+		Limit:    int32(limit),
+		Offset:   int32(offset),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := s.queries.CountRoles(ctx)
+	total, err := s.queries.CountRoles(ctx, repo.CountRolesParams{
+		Search:   search,
+		IsGlobal: nullable.BoolPtr(isGlobal),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -57,12 +64,15 @@ func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Rol
 	}, nil
 }
 
-func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) (*response.Page[RoleResponse], error) {
+func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int, search *string, sortBy, sortDir string) (*response.Page[RoleResponse], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
 	rows, err := s.queries.ListRolesWithCountsByServiceID(ctx, repo.ListRolesWithCountsByServiceIDParams{
 		ServiceID: nullable.String(serviceID),
+		Search:    search,
+		SortBy:    sortBy,
+		SortDir:   sortDir,
 		Limit:     int32(limit),
 		Offset:    int32(offset),
 	})
@@ -70,7 +80,10 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 		return nil, err
 	}
 
-	total, err := s.queries.CountRolesByServiceID(ctx, nullable.String(serviceID))
+	total, err := s.queries.CountRolesByServiceID(ctx, repo.CountRolesByServiceIDParams{
+		ServiceID: nullable.String(serviceID),
+		Search:    search,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -271,6 +284,7 @@ func (s *Service) Detailed(ctx context.Context, roleID string) (DetailedResponse
 
 	return DetailedResponse{
 		ID:                   roleRow.ID,
+		ServiceID:            nullable.StringOrNil(roleRow.ServiceID),
 		Name:                 roleRow.Name,
 		Description:          roleRow.Description,
 		IsGlobal:             roleRow.IsGlobal,

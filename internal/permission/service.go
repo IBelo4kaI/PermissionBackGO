@@ -22,16 +22,22 @@ func NewService(queries repo.Querier) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Permission], error) {
+func (s *Service) List(ctx context.Context, page, limit int, search *string, sortBy, sortDir string) (*response.Page[Permission], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
-	rows, err := s.queries.ListPermissions(ctx, repo.ListPermissionsParams{Limit: int32(limit), Offset: int32(offset)})
+	rows, err := s.queries.ListPermissions(ctx, repo.ListPermissionsParams{
+		Search:  search,
+		SortBy:  sortBy,
+		SortDir: sortDir,
+		Limit:   int32(limit),
+		Offset:  int32(offset),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	total, err := s.queries.CountPermissions(ctx)
+	total, err := s.queries.CountPermissions(ctx, repo.CountPermissionsParams{Search: search})
 	if err != nil {
 		return nil, err
 	}
@@ -50,14 +56,25 @@ func (s *Service) List(ctx context.Context, page, limit int) (*response.Page[Per
 	}, nil
 }
 
-func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int) ([]Permission, error) {
+func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, limit int, search *string, sortBy, sortDir string) (*response.Page[Permission], error) {
 	page, limit = pageHelper.NormalizePage(page, limit)
 	offset := (page - 1) * limit
 
 	rows, err := s.queries.ListPermissionsByServiceID(ctx, repo.ListPermissionsByServiceIDParams{
 		ServiceID: nullable.String(serviceID),
+		Search:    search,
+		SortBy:    sortBy,
+		SortDir:   sortDir,
 		Limit:     int32(limit),
 		Offset:    int32(offset),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	total, err := s.queries.CountPermissionsByServiceID(ctx, repo.CountPermissionsByServiceIDParams{
+		ServiceID: nullable.String(serviceID),
+		Search:    search,
 	})
 	if err != nil {
 		return nil, err
@@ -67,7 +84,14 @@ func (s *Service) ListByServiceID(ctx context.Context, serviceID string, page, l
 	for _, r := range rows {
 		items = append(items, fromByServiceRow(r))
 	}
-	return items, nil
+
+	return &response.Page[Permission]{
+		Items: items,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+		Pages: pageHelper.PageCount(total, limit),
+	}, nil
 }
 
 func (s *Service) GetByID(ctx context.Context, id string) (Permission, error) {

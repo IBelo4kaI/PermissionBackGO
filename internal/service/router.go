@@ -34,7 +34,7 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 			Tags:        []string{"Сервисы"},
 		}))
 
-	ftonic.For[apidoc.Empty, []AccessResponse](schema).
+	ftonic.For[ListUserAccessibleRequest, []AccessResponse](schema).
 		GET(group, "/user-accessible", h.ListUserAccessible, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Сервисы, доступные текущему пользователю",
 			Description: "Требует валидную пользовательскую cookie-сессию (не API-ключ).",
