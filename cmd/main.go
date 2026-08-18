@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	grpcpb "permisson/internal/adapter/grpc"
+	"permisson/internal/database"
 	repo "permisson/internal/database/sqlc"
 	"permisson/internal/pkg/env"
 	"time"
@@ -61,9 +62,9 @@ func main() {
 	}
 	defer corporateDB.Close()
 
-	// if err := database.RunMigrations(context.Background(), db); err != nil {
-	// 	panic("migrations failed: " + err.Error())
-	// }
+	if err := database.RunMigrations(context.Background(), db); err != nil {
+		panic("migrations failed: " + err.Error())
+	}
 
 	app := application{
 		config:      cfg,
