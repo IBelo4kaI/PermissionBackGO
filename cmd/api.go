@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"permisson/internal/auth"
 	repo "permisson/internal/database/sqlc"
+	corporatedb "permisson/internal/database/sqlc_corporate"
+	"permisson/internal/invite"
 	middlewares "permisson/internal/middleware"
 	"permisson/internal/permission"
 	"permisson/internal/role"
@@ -21,14 +23,16 @@ import (
 )
 
 type application struct {
-	config config
-	db     *sql.DB
-	logger *log.Logger
+	config      config
+	db          *sql.DB
+	corporateDB *sql.DB
+	logger      *log.Logger
 }
 
 type config struct {
 	addr         string
 	db           dbConfig
+	corporateDb  dbConfig
 	prefix       string
 	appEnv       string
 	cookieDomain string
@@ -82,6 +86,10 @@ func (app *application) mount() *fiber.App {
 	roleService := role.NewService(repo.New(app.db))
 	roleHandler := role.NewHandler(roleService)
 	role.RegisterRoutes(v1, roleHandler, schema, require)
+
+	inviteService := invite.NewService(repo.New(app.db), corporatedb.New(app.corporateDB), userService)
+	inviteHandler := invite.NewHandler(inviteService, authService, app.config.appEnv == "production", app.config.cookieDomain)
+	invite.RegisterRoutes(v1, inviteHandler, schema, require)
 
 	schema.UIHandle(fiberApp, "/docs", core.SwaggerUI)
 

@@ -58,6 +58,22 @@ type Gender struct {
 	Name string `json:"name"`
 }
 
+type Invite struct {
+	ID           string         `json:"id"`
+	Code         string         `json:"code"`
+	Email        sql.NullString `json:"email"`
+	PersonID     sql.NullString `json:"personId"`
+	CompanyID    sql.NullString `json:"companyId"`
+	DepartmentID sql.NullString `json:"departmentId"`
+	PositionID   sql.NullString `json:"positionId"`
+	CreatedBy    string         `json:"createdBy"`
+	UserID       sql.NullString `json:"userId"`
+	Used         bool           `json:"used"`
+	Revoked      bool           `json:"revoked"`
+	ExpiresAt    time.Time      `json:"expiresAt"`
+	CreatedAt    time.Time      `json:"createdAt"`
+}
+
 type Permission struct {
 	ID          string         `json:"id"`
 	ServiceID   sql.NullString `json:"serviceId"`

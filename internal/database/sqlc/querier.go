@@ -19,6 +19,7 @@ type Querier interface {
 	CountServices(ctx context.Context, arg CountServicesParams) (int64, error)
 	CountUsers(ctx context.Context, arg CountUsersParams) (int64, error)
 	CountUsersByServiceID(ctx context.Context, arg CountUsersByServiceIDParams) (int64, error)
+	CreateInvite(ctx context.Context, arg CreateInviteParams) error
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) error
 	CreateRole(ctx context.Context, arg CreateRoleParams) error
 	CreateService(ctx context.Context, arg CreateServiceParams) error
@@ -38,7 +39,13 @@ type Querier interface {
 	// раз, но CAST(... AS CHAR) даёт sqlc однозначный тип (string), поэтому в
 	// сгенерированных параметрах будет ровно 4 понятных поля, а не CONCAT_2..CONCAT_12.
 	ExistsUserPermission(ctx context.Context, arg ExistsUserPermissionParams) (bool, error)
+	// Используется при создании инвайта: ищет ещё не использованный, не
+	// отозванный и не истёкший инвайт на этот email, чтобы отозвать его перед
+	// выдачей нового (см. invite.Service.Create).
+	GetActiveInviteByEmail(ctx context.Context, email sql.NullString) (Invite, error)
 	GetGenderByID(ctx context.Context, id string) (Gender, error)
+	GetInviteByCode(ctx context.Context, code string) (Invite, error)
+	GetInviteByID(ctx context.Context, id string) (Invite, error)
 	GetPermissionByCode(ctx context.Context, code string) (GetPermissionByCodeRow, error)
 	GetPermissionByID(ctx context.Context, id string) (GetPermissionByIDRow, error)
 	GetRoleByID(ctx context.Context, id string) (Role, error)
@@ -52,6 +59,10 @@ type Querier interface {
 	ListAllPermissionsByServiceID(ctx context.Context, serviceID sql.NullString) ([]ListAllPermissionsByServiceIDRow, error)
 	ListAllUsers(ctx context.Context) ([]ListAllUsersRow, error)
 	ListGenders(ctx context.Context) ([]Gender, error)
+	// Без пагинации (см. ListAllUsers): фильтрация по search/company_id/
+	// department_id/position_id и сортировка выполняются в Go, см.
+	// invite.Service.List.
+	ListInvites(ctx context.Context) ([]Invite, error)
 	// search: поиск по code/name/description/имени сервиса (LIKE, NULL — без фильтра).
 	// sort_by/sort_dir: колонка (code/name/description/service_name/created_at,
 	// иначе — created_at) и направление сортировки ("asc" — иначе "desc") задаются
@@ -86,8 +97,10 @@ type Querier interface {
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	ListUsersByServiceID(ctx context.Context, arg ListUsersByServiceIDParams) ([]ListUsersByServiceIDRow, error)
 	ListUsersWithRole(ctx context.Context, roleID string) ([]ListUsersWithRoleRow, error)
+	MarkInviteUsed(ctx context.Context, arg MarkInviteUsedParams) error
 	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
 	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
+	RevokeInvite(ctx context.Context, id string) error
 	RevokeServiceAPIKey(ctx context.Context, id string) error
 	SetServiceAPIKeyHash(ctx context.Context, arg SetServiceAPIKeyHashParams) error
 	UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error

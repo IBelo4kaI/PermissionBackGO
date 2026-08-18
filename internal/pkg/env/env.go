@@ -24,6 +24,13 @@ func (e *Env) GetDbString() string {
 	return os.Getenv("DB_STRING")
 }
 
+// GetCorporateDbString — DSN общей (corporate) БД: профили/оргструктура,
+// которыми этот сервис не управляет (миграции туда не применяются, см.
+// internal/database/corporate_schema), но пишет напрямую при принятии инвайта.
+func (e *Env) GetCorporateDbString() string {
+	return os.Getenv("CORPORATE_DB_STRING")
+}
+
 func (e *Env) GetAddr() string {
 	return os.Getenv("ADDR")
 }

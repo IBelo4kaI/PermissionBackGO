@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	grpcpb "permisson/internal/adapter/grpc"
+	"permisson/internal/database"
 	repo "permisson/internal/database/sqlc"
 	"permisson/internal/pkg/env"
 	"time"
@@ -31,6 +32,9 @@ func main() {
 		db: dbConfig{
 			dsn: env.GetDbString(),
 		},
+		corporateDb: dbConfig{
+			dsn: env.GetCorporateDbString(),
+		},
 		prefix:       "time",
 		appEnv:       env.GetAppEnv(),
 		cookieDomain: env.GetCookieDomain(),
@@ -49,21 +53,24 @@ func main() {
 	}
 	defer db.Close()
 
-	// if err := database.RunMigrations(context.Background(), db); err != nil {
-	// 	panic("migrations failed: " + err.Error())
-	// }
+	// corporate-БД: только чтение/запись профилей (persons/employments и т.д.),
+	// миграции сюда не применяются (см. internal/database/corporate_schema).
+	corporateDB, err := sql.Open("mysql", cfg.corporateDb.dsn)
+	if err != nil {
+		fmt.Println("error opening corporate database:", err)
+		panic("error con corporate database")
+	}
+	defer corporateDB.Close()
 
-	// // gRPC-сервер (как в Python-версии — отдельный порт, запускается параллельно с HTTP).
-	// go func() {
-	// 	if err := runGRPCServer(repo.New(db)); err != nil {
-	// 		logger.Error("gRPC server failed", "error", err)
-	// 	}
-	// }()
+	if err := database.RunMigrations(context.Background(), db); err != nil {
+		panic("migrations failed: " + err.Error())
+	}
 
 	app := application{
-		config: cfg,
-		db:     db,
-		logger: logger,
+		config:      cfg,
+		db:          db,
+		corporateDB: corporateDB,
+		logger:      logger,
 	}
 
 	// app.run(app.mount())

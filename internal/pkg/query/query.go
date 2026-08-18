@@ -32,6 +32,17 @@ func QuerySearch(c fiber.Ctx) *string {
 	return &raw
 }
 
+// QueryStringPtr читает необязательный строковый query-параметр как точный
+// фильтр (в отличие от QuerySearch — без LIKE/подстроки). Пустая строка или
+// отсутствие параметра — nil, то есть "фильтр не задан".
+func QueryStringPtr(c fiber.Ctx, key string) *string {
+	raw := strings.TrimSpace(c.Query(key))
+	if raw == "" {
+		return nil
+	}
+	return &raw
+}
+
 // QueryBoolPtr читает необязательный булев query-параметр ("true"/"1" —
 // true, "false"/"0" — false, всё остальное, включая отсутствие параметра —
 // nil, то есть "фильтр не задан"). Используется, когда важно отличить
