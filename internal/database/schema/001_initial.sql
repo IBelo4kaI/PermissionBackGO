@@ -32,7 +32,8 @@ CREATE TABLE `services` (
 	`description` text NOT NULL,
 	`image_url` text,
 	`url` text,
-	`created_at` datetime NOT NULL default current_timestamp
+	`created_at` datetime NOT NULL default current_timestamp,
+	`api_key_hash` varchar(64) default NULL
 ) engine = innodb default charset = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
 CREATE TABLE `sessions` (
@@ -61,6 +62,11 @@ CREATE TABLE `user_roles` (
 	`assigned_at` datetime NOT NULL default current_timestamp
 ) engine = innodb default charset = utf8mb4 COLLATE = utf8mb4_0900_ai_ci;
 
+ALTER TABLE `api_keys`
+ADD PRIMARY KEY (`id`),
+ADD KEY `user_id` (`user_id`),
+ADD KEY `service_id` (`service_id`);
+
 ALTER TABLE `genders`
 ADD PRIMARY KEY (`id`),
 ADD UNIQUE KEY `NAME_UNIQUE` (`name`);
@@ -82,7 +88,8 @@ ADD KEY `permission_id` (`permission_id`);
 ALTER TABLE `services`
 ADD PRIMARY KEY (`id`),
 ADD UNIQUE KEY `name` (`name`),
-ADD UNIQUE KEY `prefix` (`prefix`);
+ADD UNIQUE KEY `prefix` (`prefix`),
+ADD UNIQUE KEY `api_key_hash` (`api_key_hash`);
 
 ALTER TABLE `sessions`
 ADD PRIMARY KEY (`id`),

@@ -1,2 +1,0 @@
-ALTER TABLE services
-ADD COLUMN api_key_hash VARCHAR(64) UNIQUE NULL;
