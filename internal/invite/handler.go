@@ -6,15 +6,12 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	"permisson/internal/auth"
-	"permisson/internal/pkg/caller"
 	"permisson/internal/pkg/query"
 	"permisson/internal/user"
 )
 
-// Handler держит *auth.Service по двум причинам: узнать, кто из
-// пользователей создаёт инвайт (created_by — FK на users, доступен только
-// авторизованным пользователям, не сервисным API-ключам), и автологин сразу
-// после Accept (как auth.Handler.Login).
+// Handler держит *auth.Service по двум причинам: определить created_by (см.
+// Create) и автологин сразу после Accept (как auth.Handler.Login).
 type Handler struct {
 	service      *Service
 	auth         *auth.Service
@@ -26,16 +23,15 @@ func NewHandler(service *Service, authService *auth.Service, cookieSecure bool, 
 	return &Handler{service: service, auth: authService, cookieSecure: cookieSecure, cookieDomain: cookieDomain}
 }
 
-// Create требует пользовательскую сессию, а не просто require("invites",
-// "create"): у сервисных API-ключей нет users.id, а invites.created_by — это
-// NOT NULL FK на users, поставить его для вызова от имени сервиса нечем.
+// Create: created_by = callerInfo.UserID — для пользовательской сессии это
+// id из сессии, для сервисного API-ключа CallerFrom его не заполняет, так
+// что поле остаётся "" и Service.Create кладёт NULL (см.
+// schema/004_invites_created_by_nullable.sql) — специального разбора по
+// типу caller'а тут не нужно.
 func (h *Handler) Create(c fiber.Ctx) error {
 	callerInfo, err := h.auth.CallerFrom(c.Context(), c.Cookies("session"))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
-	}
-	if callerInfo.Type != caller.User {
-		return fiber.NewError(fiber.StatusForbidden, "Инвайты может создавать только авторизованный пользователь")
 	}
 
 	var req CreateRequest

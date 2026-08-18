@@ -31,7 +31,7 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 	ftonic.For[CreateRequest, InviteResponse](schema).
 		POST(group, "/", require("invites", "create"), h.Create, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Создать приглашение",
-			Description: "Требует invites:create и пользовательскую cookie-сессию (не сервисный API-ключ — created_by это FK на users).",
+			Description: "Требует invites:create. При вызове по сервисному API-ключу created_by остаётся пустым.",
 			Tags:        []string{"Приглашения"},
 		}))
 

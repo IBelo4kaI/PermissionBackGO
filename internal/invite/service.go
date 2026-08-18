@@ -40,6 +40,9 @@ func NewService(queries repo.Querier, corporateQueries corporatedb.Querier, user
 	return &Service{queries: queries, corporateQueries: corporateQueries, userService: userService}
 }
 
+// createdBy — id пользователя из сессии, либо "" для вызова по сервисному
+// API-ключу (created_by в этом случае остаётся NULL, см.
+// schema/004_invites_created_by_nullable.sql).
 func (s *Service) Create(ctx context.Context, req CreateRequest, createdBy string) (InviteResponse, error) {
 	expiresInHours := defaultExpiresInHours
 	if req.ExpiresInHours != nil {
@@ -72,7 +75,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest, createdBy strin
 		CompanyID:    nullable.StringPtr(req.CompanyID),
 		DepartmentID: nullable.StringPtr(req.DepartmentID),
 		PositionID:   nullable.StringPtr(req.PositionID),
-		CreatedBy:    createdBy,
+		CreatedBy:    nullable.String(createdBy),
 		ExpiresAt:    nowUTC().Add(time.Duration(expiresInHours) * time.Hour),
 	})
 	if err != nil {
@@ -90,15 +93,20 @@ func (s *Service) GetByID(ctx context.Context, id string) (InviteResponse, error
 		}
 		return InviteResponse{}, err
 	}
-	return fromInvite(inv), nil
+	return fromInvite(fromGetInviteByIDRow(inv)), nil
 }
 
 // List — без пагинации (см. user.Service.ListAll): фильтрация и сортировка
 // применяются в Go после выборки всех строк.
 func (s *Service) List(ctx context.Context, search, companyID, departmentID, positionID *string, sortBy, sortDir string) ([]InviteResponse, error) {
-	rows, err := s.queries.ListInvites(ctx)
+	dbRows, err := s.queries.ListInvites(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	rows := make([]inviteRow, 0, len(dbRows))
+	for _, r := range dbRows {
+		rows = append(rows, fromListInvitesRow(r))
 	}
 
 	rows = filterInvites(rows, search, companyID, departmentID, positionID)
@@ -225,7 +233,7 @@ func (s *Service) Accept(ctx context.Context, req AcceptRequest) (user.UserRespo
 		return user.UserResponse{}, err
 	}
 
-	if err := s.linkOrCreatePerson(ctx, inv, req, newUser.ID); err != nil {
+	if err := s.linkOrCreatePerson(ctx, fromGetInviteByCodeRow(inv), req, newUser.ID); err != nil {
 		return user.UserResponse{}, err
 	}
 
@@ -240,7 +248,7 @@ func (s *Service) Accept(ctx context.Context, req AcceptRequest) (user.UserRespo
 }
 
 // linkOrCreatePerson — часть Accept, вынесенная отдельно ради читаемости.
-func (s *Service) linkOrCreatePerson(ctx context.Context, inv repo.Invite, req AcceptRequest, authUserID string) error {
+func (s *Service) linkOrCreatePerson(ctx context.Context, inv inviteRow, req AcceptRequest, authUserID string) error {
 	personID := inv.PersonID.String
 	if inv.PersonID.Valid && personID != "" {
 		// Существующий person: перезаписываем профиль тем, что пользователь
@@ -300,8 +308,8 @@ func (s *Service) linkOrCreatePerson(ctx context.Context, inv repo.Invite, req A
 // filterInvites — регистронезависимый поиск по email + точные фильтры по
 // company_id/department_id/position_id (см. user.filterUserRows — тот же приём
 // для списка без SQL-пагинации).
-func filterInvites(rows []repo.Invite, search, companyID, departmentID, positionID *string) []repo.Invite {
-	filtered := make([]repo.Invite, 0, len(rows))
+func filterInvites(rows []inviteRow, search, companyID, departmentID, positionID *string) []inviteRow {
+	filtered := make([]inviteRow, 0, len(rows))
 	for _, r := range rows {
 		if search != nil && !strings.Contains(strings.ToLower(r.Email.String), strings.ToLower(*search)) {
 			continue
@@ -322,7 +330,7 @@ func filterInvites(rows []repo.Invite, search, companyID, departmentID, position
 
 // sortInvites сортирует rows "на месте" по одной из SortableColumns
 // (см. user.sortUserRows).
-func sortInvites(rows []repo.Invite, sortBy, sortDir string) {
+func sortInvites(rows []inviteRow, sortBy, sortDir string) {
 	less := func(i, j int) bool {
 		switch sortBy {
 		case "email":

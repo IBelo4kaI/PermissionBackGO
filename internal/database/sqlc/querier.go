@@ -42,10 +42,10 @@ type Querier interface {
 	// Используется при создании инвайта: ищет ещё не использованный, не
 	// отозванный и не истёкший инвайт на этот email, чтобы отозвать его перед
 	// выдачей нового (см. invite.Service.Create).
-	GetActiveInviteByEmail(ctx context.Context, email sql.NullString) (Invite, error)
+	GetActiveInviteByEmail(ctx context.Context, email sql.NullString) (GetActiveInviteByEmailRow, error)
 	GetGenderByID(ctx context.Context, id string) (Gender, error)
-	GetInviteByCode(ctx context.Context, code string) (Invite, error)
-	GetInviteByID(ctx context.Context, id string) (Invite, error)
+	GetInviteByCode(ctx context.Context, code string) (GetInviteByCodeRow, error)
+	GetInviteByID(ctx context.Context, id string) (GetInviteByIDRow, error)
 	GetPermissionByCode(ctx context.Context, code string) (GetPermissionByCodeRow, error)
 	GetPermissionByID(ctx context.Context, id string) (GetPermissionByIDRow, error)
 	GetRoleByID(ctx context.Context, id string) (Role, error)
@@ -62,7 +62,7 @@ type Querier interface {
 	// Без пагинации (см. ListAllUsers): фильтрация по search/company_id/
 	// department_id/position_id и сортировка выполняются в Go, см.
 	// invite.Service.List.
-	ListInvites(ctx context.Context) ([]Invite, error)
+	ListInvites(ctx context.Context) ([]ListInvitesRow, error)
 	// search: поиск по code/name/description/имени сервиса (LIKE, NULL — без фильтра).
 	// sort_by/sort_dir: колонка (code/name/description/service_name/created_at,
 	// иначе — created_at) и направление сортировки ("asc" — иначе "desc") задаются

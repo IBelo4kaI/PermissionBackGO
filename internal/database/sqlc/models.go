@@ -66,12 +66,12 @@ type Invite struct {
 	CompanyID    sql.NullString `json:"companyId"`
 	DepartmentID sql.NullString `json:"departmentId"`
 	PositionID   sql.NullString `json:"positionId"`
-	CreatedBy    string         `json:"createdBy"`
 	UserID       sql.NullString `json:"userId"`
 	Used         bool           `json:"used"`
 	Revoked      bool           `json:"revoked"`
 	ExpiresAt    time.Time      `json:"expiresAt"`
 	CreatedAt    time.Time      `json:"createdAt"`
+	CreatedBy    sql.NullString `json:"createdBy"`
 }
 
 type Permission struct {

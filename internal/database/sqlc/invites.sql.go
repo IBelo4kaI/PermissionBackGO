@@ -26,7 +26,7 @@ type CreateInviteParams struct {
 	CompanyID    sql.NullString `json:"companyId"`
 	DepartmentID sql.NullString `json:"departmentId"`
 	PositionID   sql.NullString `json:"positionId"`
-	CreatedBy    string         `json:"createdBy"`
+	CreatedBy    sql.NullString `json:"createdBy"`
 	ExpiresAt    time.Time      `json:"expiresAt"`
 }
 
@@ -69,12 +69,28 @@ WHERE
 	AND expires_at > UTC_TIMESTAMP()
 `
 
+type GetActiveInviteByEmailRow struct {
+	ID           string         `json:"id"`
+	Code         string         `json:"code"`
+	Email        sql.NullString `json:"email"`
+	PersonID     sql.NullString `json:"personId"`
+	CompanyID    sql.NullString `json:"companyId"`
+	DepartmentID sql.NullString `json:"departmentId"`
+	PositionID   sql.NullString `json:"positionId"`
+	CreatedBy    sql.NullString `json:"createdBy"`
+	UserID       sql.NullString `json:"userId"`
+	Used         bool           `json:"used"`
+	Revoked      bool           `json:"revoked"`
+	ExpiresAt    time.Time      `json:"expiresAt"`
+	CreatedAt    time.Time      `json:"createdAt"`
+}
+
 // Используется при создании инвайта: ищет ещё не использованный, не
 // отозванный и не истёкший инвайт на этот email, чтобы отозвать его перед
 // выдачей нового (см. invite.Service.Create).
-func (q *Queries) GetActiveInviteByEmail(ctx context.Context, email sql.NullString) (Invite, error) {
+func (q *Queries) GetActiveInviteByEmail(ctx context.Context, email sql.NullString) (GetActiveInviteByEmailRow, error) {
 	row := q.db.QueryRowContext(ctx, getActiveInviteByEmail, email)
-	var i Invite
+	var i GetActiveInviteByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
@@ -114,9 +130,25 @@ WHERE
 	code = ?
 `
 
-func (q *Queries) GetInviteByCode(ctx context.Context, code string) (Invite, error) {
+type GetInviteByCodeRow struct {
+	ID           string         `json:"id"`
+	Code         string         `json:"code"`
+	Email        sql.NullString `json:"email"`
+	PersonID     sql.NullString `json:"personId"`
+	CompanyID    sql.NullString `json:"companyId"`
+	DepartmentID sql.NullString `json:"departmentId"`
+	PositionID   sql.NullString `json:"positionId"`
+	CreatedBy    sql.NullString `json:"createdBy"`
+	UserID       sql.NullString `json:"userId"`
+	Used         bool           `json:"used"`
+	Revoked      bool           `json:"revoked"`
+	ExpiresAt    time.Time      `json:"expiresAt"`
+	CreatedAt    time.Time      `json:"createdAt"`
+}
+
+func (q *Queries) GetInviteByCode(ctx context.Context, code string) (GetInviteByCodeRow, error) {
 	row := q.db.QueryRowContext(ctx, getInviteByCode, code)
-	var i Invite
+	var i GetInviteByCodeRow
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
@@ -156,9 +188,25 @@ WHERE
 	id = ?
 `
 
-func (q *Queries) GetInviteByID(ctx context.Context, id string) (Invite, error) {
+type GetInviteByIDRow struct {
+	ID           string         `json:"id"`
+	Code         string         `json:"code"`
+	Email        sql.NullString `json:"email"`
+	PersonID     sql.NullString `json:"personId"`
+	CompanyID    sql.NullString `json:"companyId"`
+	DepartmentID sql.NullString `json:"departmentId"`
+	PositionID   sql.NullString `json:"positionId"`
+	CreatedBy    sql.NullString `json:"createdBy"`
+	UserID       sql.NullString `json:"userId"`
+	Used         bool           `json:"used"`
+	Revoked      bool           `json:"revoked"`
+	ExpiresAt    time.Time      `json:"expiresAt"`
+	CreatedAt    time.Time      `json:"createdAt"`
+}
+
+func (q *Queries) GetInviteByID(ctx context.Context, id string) (GetInviteByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getInviteByID, id)
-	var i Invite
+	var i GetInviteByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Code,
@@ -198,18 +246,34 @@ ORDER BY
 	created_at DESC
 `
 
+type ListInvitesRow struct {
+	ID           string         `json:"id"`
+	Code         string         `json:"code"`
+	Email        sql.NullString `json:"email"`
+	PersonID     sql.NullString `json:"personId"`
+	CompanyID    sql.NullString `json:"companyId"`
+	DepartmentID sql.NullString `json:"departmentId"`
+	PositionID   sql.NullString `json:"positionId"`
+	CreatedBy    sql.NullString `json:"createdBy"`
+	UserID       sql.NullString `json:"userId"`
+	Used         bool           `json:"used"`
+	Revoked      bool           `json:"revoked"`
+	ExpiresAt    time.Time      `json:"expiresAt"`
+	CreatedAt    time.Time      `json:"createdAt"`
+}
+
 // Без пагинации (см. ListAllUsers): фильтрация по search/company_id/
 // department_id/position_id и сортировка выполняются в Go, см.
 // invite.Service.List.
-func (q *Queries) ListInvites(ctx context.Context) ([]Invite, error) {
+func (q *Queries) ListInvites(ctx context.Context) ([]ListInvitesRow, error) {
 	rows, err := q.db.QueryContext(ctx, listInvites)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Invite
+	var items []ListInvitesRow
 	for rows.Next() {
-		var i Invite
+		var i ListInvitesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Code,

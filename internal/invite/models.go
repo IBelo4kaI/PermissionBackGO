@@ -17,6 +17,10 @@ type CreateRequest struct {
 
 // InviteResponse — карточка инвайта. Code отдаётся всегда, в отличие от
 // сессий/API-ключей код инвайта не хэшируется (см. schema/003_add_invites.sql).
+//
+// CreatedBy — nullable (см. schema/004_invites_created_by_nullable.sql):
+// для инвайта, выпущенного по сервисному API-ключу, остаётся пустым — сервис
+// не привязан ни к какому users.id (см. Handler.Create).
 type InviteResponse struct {
 	ID           string    `json:"id"`
 	Code         string    `json:"code"`
@@ -25,7 +29,7 @@ type InviteResponse struct {
 	CompanyID    *string   `json:"company_id"`
 	DepartmentID *string   `json:"department_id"`
 	PositionID   *string   `json:"position_id"`
-	CreatedBy    string    `json:"created_by"`
+	CreatedBy    *string   `json:"created_by"`
 	UserID       *string   `json:"user_id"`
 	Used         bool      `json:"used"`
 	Revoked      bool      `json:"revoked"`
