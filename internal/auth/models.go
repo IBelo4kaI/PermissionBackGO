@@ -19,3 +19,23 @@ type ValidateSessionResponse struct {
 type LogoutResponse struct {
 	Message string `json:"message" example:"Вы успешно вышли из системы" description:"Result message"`
 }
+
+// ForgotPasswordRequest.Username — логин (email). Ответ всегда одинаковый,
+// есть такой пользователь или нет (см. Service.ForgotPassword) — иначе
+// ручка становится оракулом существования логинов.
+type ForgotPasswordRequest struct {
+	Username string `json:"username" validate:"required,max=100" example:"user@example.com"`
+}
+
+type ForgotPasswordResponse struct {
+	Message string `json:"message" example:"Если такой пользователь существует, письмо с инструкциями отправлено"`
+}
+
+type ResetPasswordRequest struct {
+	Token       string `json:"token" validate:"required"`
+	NewPassword string `json:"new_password" validate:"required,max=255"`
+}
+
+type ResetPasswordResponse struct {
+	Message string `json:"message" example:"Пароль изменён"`
+}

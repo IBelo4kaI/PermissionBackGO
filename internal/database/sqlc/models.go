@@ -74,6 +74,15 @@ type Invite struct {
 	CreatedBy    sql.NullString `json:"createdBy"`
 }
 
+type PasswordReset struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"userId"`
+	TokenHash string    `json:"tokenHash"`
+	Used      bool      `json:"used"`
+	ExpiresAt time.Time `json:"expiresAt"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 type Permission struct {
 	ID          string         `json:"id"`
 	ServiceID   sql.NullString `json:"serviceId"`
@@ -115,6 +124,18 @@ type Session struct {
 	TokenHash string    `json:"tokenHash"`
 	UserID    string    `json:"userId"`
 	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+type SmtpSetting struct {
+	ID                string         `json:"id"`
+	Host              string         `json:"host"`
+	Port              int32          `json:"port"`
+	Username          string         `json:"username"`
+	PasswordEncrypted string         `json:"passwordEncrypted"`
+	FromAddress       string         `json:"fromAddress"`
+	FromName          sql.NullString `json:"fromName"`
+	UseTls            bool           `json:"useTls"`
+	UpdatedAt         time.Time      `json:"updatedAt"`
 }
 
 type User struct {

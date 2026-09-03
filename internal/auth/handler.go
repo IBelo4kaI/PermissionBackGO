@@ -91,3 +91,43 @@ func (h *Handler) Logout(c fiber.Ctx) error {
 
 	return c.JSON(LogoutResponse{Message: "Вы успешно вышли из системы"})
 }
+
+const forgotPasswordMessage = "Если такой пользователь существует, письмо с инструкциями отправлено"
+
+func (h *Handler) ForgotPassword(c fiber.Ctx) error {
+	var req ForgotPasswordRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Невалидное тело запроса")
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	// Ошибку сюда бы не пропустили только сбои самой БД — Service.ForgotPassword
+	// уже гасит "пользователь не найден"/SMTP-сбои внутри себя, ответ клиенту
+	// в любом случае один и тот же (см. комментарий в auth.Service.ForgotPassword).
+	if err := h.service.ForgotPassword(c.Context(), req.Username); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+
+	return c.JSON(ForgotPasswordResponse{Message: forgotPasswordMessage})
+}
+
+func (h *Handler) ResetPassword(c fiber.Ctx) error {
+	var req ResetPasswordRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Невалидное тело запроса")
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := h.service.ResetPassword(c.Context(), req.Token, req.NewPassword); err != nil {
+		if errors.Is(err, ErrInvalidResetToken) {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+
+	return c.JSON(ResetPasswordResponse{Message: "Пароль изменён"})
+}

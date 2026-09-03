@@ -27,6 +27,11 @@ func main() {
 		panic(err)
 	}
 
+	settingsEncryptionKey, err := env.GetSettingsEncryptionKey()
+	if err != nil {
+		panic(err)
+	}
+
 	cfg := config{
 		addr: env.GetAddr(),
 		db: dbConfig{
@@ -35,10 +40,12 @@ func main() {
 		corporateDb: dbConfig{
 			dsn: env.GetCorporateDbString(),
 		},
-		prefix:       "time",
-		appEnv:       env.GetAppEnv(),
-		cookieDomain: env.GetCookieDomain(),
-		sessionTTL:   sessionTTL,
+		prefix:                "time",
+		appEnv:                env.GetAppEnv(),
+		cookieDomain:          env.GetCookieDomain(),
+		sessionTTL:            sessionTTL,
+		appBaseURL:            env.GetAppBaseURL(),
+		settingsEncryptionKey: settingsEncryptionKey,
 	}
 
 	logger := log.NewWithOptions(os.Stdout, log.Options{

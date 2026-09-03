@@ -28,4 +28,18 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 			Summary: "Выход из системы и удаление сессии",
 			Tags:    []string{"Авторизация"},
 		}))
+
+	ftonic.For[ForgotPasswordRequest, ForgotPasswordResponse](schema).
+		POST(group, "/forgot-password", h.ForgotPassword, ftonic.WithOperation(docs.OperationObject{
+			Summary:     "Запросить восстановление пароля",
+			Description: "Публичный эндпоинт. Ответ одинаковый независимо от того, существует ли пользователь.",
+			Tags:        []string{"Авторизация"},
+		}))
+
+	ftonic.For[ResetPasswordRequest, ResetPasswordResponse](schema).
+		POST(group, "/reset-password", h.ResetPassword, ftonic.WithOperation(docs.OperationObject{
+			Summary:     "Установить новый пароль по ссылке из письма",
+			Description: "Публичный эндпоинт. Удаляет все сессии пользователя после смены пароля.",
+			Tags:        []string{"Авторизация"},
+		}))
 }

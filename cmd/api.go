@@ -10,6 +10,7 @@ import (
 	"permisson/internal/permission"
 	"permisson/internal/role"
 	"permisson/internal/service"
+	"permisson/internal/settings"
 	"permisson/internal/user"
 	"time"
 
@@ -30,13 +31,15 @@ type application struct {
 }
 
 type config struct {
-	addr         string
-	db           dbConfig
-	corporateDb  dbConfig
-	prefix       string
-	appEnv       string
-	cookieDomain string
-	sessionTTL   time.Duration
+	addr                  string
+	db                    dbConfig
+	corporateDb           dbConfig
+	prefix                string
+	appEnv                string
+	cookieDomain          string
+	sessionTTL            time.Duration
+	appBaseURL            string
+	settingsEncryptionKey []byte
 }
 
 type dbConfig struct {
@@ -64,13 +67,18 @@ func (app *application) mount() *fiber.App {
 
 	v1 := fiberApp.Group("/api/as")
 
-	authService := auth.NewService(repo.New(app.db), app.config.sessionTTL)
+	settingsService := settings.NewService(repo.New(app.db), app.config.settingsEncryptionKey)
+
+	authService := auth.NewService(repo.New(app.db), app.config.sessionTTL, settingsService, app.config.appBaseURL)
 	authHandler := auth.NewHandler(authService, app.config.appEnv == "production", app.config.cookieDomain)
 	auth.RegisterRoutes(v1, authHandler, schema)
 
 	permissionService := permission.NewService(repo.New(app.db))
 
 	require := middlewares.NewRequire(authService, permissionService)
+
+	settingsHandler := settings.NewHandler(settingsService)
+	settings.RegisterRoutes(v1, settingsHandler, schema, require)
 
 	permissionHandler := permission.NewHandler(permissionService)
 	permission.RegisterRoutes(v1, permissionHandler, schema, require)

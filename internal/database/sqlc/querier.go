@@ -20,11 +20,14 @@ type Querier interface {
 	CountUsers(ctx context.Context, arg CountUsersParams) (int64, error)
 	CountUsersByServiceID(ctx context.Context, arg CountUsersByServiceIDParams) (int64, error)
 	CreateInvite(ctx context.Context, arg CreateInviteParams) error
+	CreatePasswordReset(ctx context.Context, arg CreatePasswordResetParams) error
 	CreatePermission(ctx context.Context, arg CreatePermissionParams) error
 	CreateRole(ctx context.Context, arg CreateRoleParams) error
 	CreateService(ctx context.Context, arg CreateServiceParams) error
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) error
+	// Нужно вызывать перед удалением пользователя (FK password_resets.user_id -> users.id), как DeleteSessionsByUserID.
+	DeletePasswordResetsByUserID(ctx context.Context, userID string) error
 	DeletePermission(ctx context.Context, id string) error
 	DeleteRole(ctx context.Context, id string) error
 	DeleteService(ctx context.Context, id string) error
@@ -46,9 +49,13 @@ type Querier interface {
 	GetGenderByID(ctx context.Context, id string) (Gender, error)
 	GetInviteByCode(ctx context.Context, code string) (GetInviteByCodeRow, error)
 	GetInviteByID(ctx context.Context, id string) (GetInviteByIDRow, error)
+	// token хэшируется SHA-256 на стороне Go перед вызовом запроса (как sessions).
+	GetPasswordResetByTokenHash(ctx context.Context, tokenHash string) (PasswordReset, error)
 	GetPermissionByCode(ctx context.Context, code string) (GetPermissionByCodeRow, error)
 	GetPermissionByID(ctx context.Context, id string) (GetPermissionByIDRow, error)
 	GetRoleByID(ctx context.Context, id string) (Role, error)
+	// Синглтон: ровно одна строка, id фиксирован на стороне Go (settings.SingletonID).
+	GetSMTPSettings(ctx context.Context, id string) (SmtpSetting, error)
 	GetServiceByAPIKeyHash(ctx context.Context, apiKeyHash sql.NullString) (GetServiceByAPIKeyHashRow, error)
 	GetServiceByID(ctx context.Context, id string) (GetServiceByIDRow, error)
 	// token хэшируется SHA-256 на стороне Go перед вызовом запроса.
@@ -98,6 +105,7 @@ type Querier interface {
 	ListUsersByServiceID(ctx context.Context, arg ListUsersByServiceIDParams) ([]ListUsersByServiceIDRow, error)
 	ListUsersWithRole(ctx context.Context, roleID string) ([]ListUsersWithRoleRow, error)
 	MarkInviteUsed(ctx context.Context, arg MarkInviteUsedParams) error
+	MarkPasswordResetUsed(ctx context.Context, id string) error
 	RemovePermissionFromRole(ctx context.Context, arg RemovePermissionFromRoleParams) error
 	RemoveRoleFromUser(ctx context.Context, arg RemoveRoleFromUserParams) error
 	RevokeInvite(ctx context.Context, id string) error
@@ -108,6 +116,7 @@ type Querier interface {
 	UpdateService(ctx context.Context, arg UpdateServiceParams) error
 	// Частичное обновление: sqlc.narg-поля, для которых передан NULL, остаются без изменений.
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
+	UpsertSMTPSettings(ctx context.Context, arg UpsertSMTPSettingsParams) error
 }
 
 var _ Querier = (*Queries)(nil)
