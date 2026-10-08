@@ -22,6 +22,9 @@ import (
 // константа политики безопасности.
 const passwordResetTTL = time.Hour
 
+// neverExpiresAt — максимум для MySQL TIMESTAMP (sessions.expires_at).
+var neverExpiresAt = time.Date(2038, 1, 19, 3, 14, 7, 0, time.UTC)
+
 type Service struct {
 	queries    repo.Querier
 	sessionTTL time.Duration
@@ -65,6 +68,9 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (LoginResult, err
 		ttl = time.Duration(*req.SessionTTLSeconds) * time.Second
 	}
 	expiresAt := time.Now().UTC().Add(ttl)
+	if req.NeverExpires {
+		expiresAt = neverExpiresAt
+	}
 
 	err = s.queries.CreateSession(ctx, repo.CreateSessionParams{
 		ID:        uuid.NewString(),

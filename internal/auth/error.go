@@ -10,6 +10,7 @@ var (
 	ErrPasswordRequired    = errors.New("Пароль обязателен")
 	ErrInvalidSession      = errors.New("Недействительная сессия")
 	ErrInvalidSessionTTL   = errors.New("session_ttl_seconds должен быть от 60 до 2592000")
+	ErrSessionTTLConflict  = errors.New("never_expires нельзя использовать вместе с session_ttl_seconds")
 	ErrSessionTokenMissing = errors.New("Session token missing")
 
 	ErrTokenRequired       = errors.New("token обязателен")

@@ -12,6 +12,9 @@ func (r LoginRequest) Validate() error {
 	if r.Password == "" {
 		return ErrPasswordRequired
 	}
+	if r.NeverExpires && r.SessionTTLSeconds != nil {
+		return ErrSessionTTLConflict
+	}
 	if r.SessionTTLSeconds != nil && (*r.SessionTTLSeconds < minSessionTTLSeconds || *r.SessionTTLSeconds > maxSessionTTLSeconds) {
 		return ErrInvalidSessionTTL
 	}
