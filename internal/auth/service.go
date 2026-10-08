@@ -60,7 +60,11 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (LoginResult, err
 		return LoginResult{}, err
 	}
 
-	expiresAt := time.Now().UTC().Add(s.sessionTTL)
+	ttl := s.sessionTTL
+	if req.SessionTTLSeconds != nil {
+		ttl = time.Duration(*req.SessionTTLSeconds) * time.Second
+	}
+	expiresAt := time.Now().UTC().Add(ttl)
 
 	err = s.queries.CreateSession(ctx, repo.CreateSessionParams{
 		ID:        uuid.NewString(),

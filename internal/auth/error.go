@@ -9,6 +9,7 @@ var (
 	ErrUsernameRequired    = errors.New("Почта обязательна")
 	ErrPasswordRequired    = errors.New("Пароль обязателен")
 	ErrInvalidSession      = errors.New("Недействительная сессия")
+	ErrInvalidSessionTTL   = errors.New("session_ttl_seconds должен быть от 60 до 2592000")
 	ErrSessionTokenMissing = errors.New("Session token missing")
 
 	ErrTokenRequired       = errors.New("token обязателен")
