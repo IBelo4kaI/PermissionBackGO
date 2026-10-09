@@ -105,6 +105,7 @@ type DetailedResponse struct {
 	Name                 string                         `json:"name"`
 	Description          string                         `json:"description"`
 	IsGlobal             bool                           `json:"is_global"`
+	AllowRegistration    bool                           `json:"allow_registration"`
 	CreatedAt            string                         `json:"created_at"`
 	UsedPermissionsCount int                            `json:"used_permissions_count"`
 	PermissionsByService map[string][]PermissionWithUse `json:"permissions_by_service"`

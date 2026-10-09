@@ -290,6 +290,7 @@ func (s *Service) Detailed(ctx context.Context, roleID string) (DetailedResponse
 		Name:                 roleRow.Name,
 		Description:          roleRow.Description,
 		IsGlobal:             roleRow.IsGlobal,
+		AllowRegistration:    roleRow.AllowRegistration,
 		CreatedAt:            roleRow.CreatedAt.Format(detailedTimeLayout),
 		UsedPermissionsCount: usedCount,
 		PermissionsByService: permissionsByService,
