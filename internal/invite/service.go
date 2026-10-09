@@ -223,7 +223,7 @@ func (s *Service) Accept(ctx context.Context, req AcceptRequest) (user.UserRespo
 		Birthday:   req.Birthday,
 		GenderID:   req.GenderID,
 		Password:   req.Password,
-		RoleID:     req.RoleID,
+		RoleIDs:    req.RoleIDs,
 	}
 	if err := createReq.Validate(); err != nil {
 		return user.UserResponse{}, err

@@ -34,7 +34,7 @@ type CreateRequest struct {
 	Birthday   time.Time `json:"birthday"`
 	GenderID   string    `json:"gender_id"`
 	Password   string    `json:"password"`
-	RoleID     *string   `json:"role_id" description:"Роль при регистрации; допускаются только роли с allow_registration"`
+	RoleIDs    []string  `json:"role_ids" description:"Роли при регистрации; допускаются только роли с allow_registration"`
 }
 
 // Все поля опциональны — частичное обновление (sqlc.narg + COALESCE).

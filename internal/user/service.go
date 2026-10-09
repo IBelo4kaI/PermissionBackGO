@@ -165,11 +165,8 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 		return UserResponse{}, err
 	}
 
-	roleID := ""
-	if req.RoleID != nil {
-		roleID = *req.RoleID
-	}
-	if roleID != "" {
+	roleIDs := uniqueStrings(req.RoleIDs)
+	for _, roleID := range roleIDs {
 		r, err := s.queries.GetRoleByID(ctx, roleID)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -203,7 +200,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 		return UserResponse{}, err
 	}
 
-	if roleID != "" {
+	for _, roleID := range roleIDs {
 		if err := s.queries.AddRoleToUser(ctx, repo.AddRoleToUserParams{UserID: id, RoleID: roleID}); err != nil {
 			return UserResponse{}, err
 		}
@@ -518,4 +515,20 @@ func sortPermissions(items []permission.Permission, sortBy, sortDir string) {
 		}
 		return less(j, i)
 	})
+}
+
+func uniqueStrings(in []string) []string {
+	seen := make(map[string]struct{}, len(in))
+	out := make([]string, 0, len(in))
+	for _, v := range in {
+		if v == "" {
+			continue
+		}
+		if _, ok := seen[v]; ok {
+			continue
+		}
+		seen[v] = struct{}{}
+		out = append(out, v)
+	}
+	return out
 }
