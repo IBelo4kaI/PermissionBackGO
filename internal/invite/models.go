@@ -107,4 +107,5 @@ type AcceptRequest struct {
 	Password   string    `json:"password"`
 	Phone      string    `json:"phone"`
 	Email      string    `json:"email"`
+	RoleID     *string   `json:"role_id" description:"Роль при регистрации; допускаются только роли с allow_registration"`
 }

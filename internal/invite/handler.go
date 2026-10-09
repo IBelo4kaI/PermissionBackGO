@@ -118,7 +118,7 @@ func (h *Handler) Accept(c fiber.Ctx) error {
 		case errors.Is(err, ErrCodeNotFound):
 			return fiber.NewError(fiber.StatusNotFound, err.Error())
 		case errors.Is(err, ErrInviteUsed), errors.Is(err, ErrInviteRevoked), errors.Is(err, ErrInviteExpired),
-			errors.Is(err, user.ErrGenderNotFound), errors.Is(err, user.ErrUsernameExists),
+			errors.Is(err, user.ErrGenderNotFound), errors.Is(err, user.ErrUsernameExists), errors.Is(err, user.ErrRoleNotFound), errors.Is(err, user.ErrRoleNotAllowedOnRegistration),
 			errors.Is(err, user.ErrNameRequired), errors.Is(err, user.ErrSurnameRequired),
 			errors.Is(err, user.ErrUsernameRequired), errors.Is(err, user.ErrPasswordRequired),
 			errors.Is(err, user.ErrBirthdayRequired), errors.Is(err, user.ErrGenderRequired):

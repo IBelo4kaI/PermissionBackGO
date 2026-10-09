@@ -227,7 +227,8 @@ SELECT
 	r.name,
 	r.description,
 	r.is_global,
-	r.created_at
+	r.created_at,
+	r.allow_registration
 FROM
 	roles r
 	JOIN user_roles ur ON ur.role_id = r.id

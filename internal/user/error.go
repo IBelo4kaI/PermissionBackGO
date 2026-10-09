@@ -18,6 +18,8 @@ var (
 
 	ErrRoleNotFound = errors.New("роль не найдена")
 
+	ErrRoleNotAllowedOnRegistration = errors.New("эту роль нельзя выбрать при регистрации")
+
 	ErrRoleAlreadyAssigned = errors.New("пользователь уже имеет эту роль")
 
 	ErrRoleNotAssigned = errors.New("пользователь не имеет этой роли")

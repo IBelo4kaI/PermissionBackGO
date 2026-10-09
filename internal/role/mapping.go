@@ -7,37 +7,40 @@ import (
 
 func fromModel(r repo.Role) RoleResponse {
 	return RoleResponse{
-		ID:          r.ID,
-		ServiceID:   nullable.StringOrNil(r.ServiceID),
-		Name:        r.Name,
-		Description: r.Description,
-		IsGlobal:    r.IsGlobal,
-		CreatedAt:   r.CreatedAt,
+		ID:                r.ID,
+		ServiceID:         nullable.StringOrNil(r.ServiceID),
+		Name:              r.Name,
+		Description:       r.Description,
+		IsGlobal:          r.IsGlobal,
+		AllowRegistration: r.AllowRegistration,
+		CreatedAt:         r.CreatedAt,
 	}
 }
 
 func fromListWithCountsRow(r repo.ListRolesWithCountsRow) RoleResponse {
 	return RoleResponse{
-		ID:               r.ID,
-		ServiceID:        nullable.StringOrNil(r.ServiceID),
-		Name:             r.Name,
-		Description:      r.Description,
-		IsGlobal:         r.IsGlobal,
-		CreatedAt:        r.CreatedAt,
-		UserCount:        r.UserCount,
-		PermissionsCount: r.PermissionCount,
+		ID:                r.ID,
+		ServiceID:         nullable.StringOrNil(r.ServiceID),
+		Name:              r.Name,
+		Description:       r.Description,
+		IsGlobal:          r.IsGlobal,
+		AllowRegistration: r.AllowRegistration,
+		CreatedAt:         r.CreatedAt,
+		UserCount:         r.UserCount,
+		PermissionsCount:  r.PermissionCount,
 	}
 }
 
 func fromByServiceWithCountsRow(r repo.ListRolesWithCountsByServiceIDRow) RoleResponse {
 	return RoleResponse{
-		ID:               r.ID,
-		ServiceID:        nullable.StringOrNil(r.ServiceID),
-		Name:             r.Name,
-		Description:      r.Description,
-		IsGlobal:         r.IsGlobal,
-		CreatedAt:        r.CreatedAt,
-		UserCount:        r.UserCount,
-		PermissionsCount: r.PermissionCount,
+		ID:                r.ID,
+		ServiceID:         nullable.StringOrNil(r.ServiceID),
+		Name:              r.Name,
+		Description:       r.Description,
+		IsGlobal:          r.IsGlobal,
+		AllowRegistration: r.AllowRegistration,
+		CreatedAt:         r.CreatedAt,
+		UserCount:         r.UserCount,
+		PermissionsCount:  r.PermissionCount,
 	}
 }

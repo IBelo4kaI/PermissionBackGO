@@ -165,6 +165,23 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 		return UserResponse{}, err
 	}
 
+	roleID := ""
+	if req.RoleID != nil {
+		roleID = *req.RoleID
+	}
+	if roleID != "" {
+		r, err := s.queries.GetRoleByID(ctx, roleID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return UserResponse{}, ErrRoleNotFound
+			}
+			return UserResponse{}, err
+		}
+		if !r.AllowRegistration {
+			return UserResponse{}, ErrRoleNotAllowedOnRegistration
+		}
+	}
+
 	password, err := passwordhash.Hash(req.Password)
 	if err != nil {
 		return UserResponse{}, err
@@ -184,6 +201,12 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 	})
 	if err != nil {
 		return UserResponse{}, err
+	}
+
+	if roleID != "" {
+		if err := s.queries.AddRoleToUser(ctx, repo.AddRoleToUserParams{UserID: id, RoleID: roleID}); err != nil {
+			return UserResponse{}, err
+		}
 	}
 
 	return s.GetByID(ctx, id)

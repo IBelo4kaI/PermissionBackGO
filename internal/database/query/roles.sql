@@ -5,7 +5,8 @@ SELECT
 	name,
 	description,
 	is_global,
-	created_at
+	created_at,
+	allow_registration
 FROM
 	roles
 WHERE
@@ -18,7 +19,8 @@ SELECT
 	name,
 	description,
 	is_global,
-	created_at
+	created_at,
+	allow_registration
 FROM
 	roles
 ORDER BY
@@ -51,7 +53,8 @@ SELECT
 	name,
 	description,
 	is_global,
-	created_at
+	created_at,
+	allow_registration
 FROM
 	roles
 WHERE
@@ -87,6 +90,7 @@ SELECT
 	r.description,
 	r.is_global,
 	r.created_at,
+	r.allow_registration,
 	COALESCE(uc.user_count, 0) AS user_count,
 	COALESCE(pc.permission_count, 0) AS permission_count
 FROM
@@ -147,6 +151,7 @@ SELECT
 	r.description,
 	r.is_global,
 	r.created_at,
+	r.allow_registration,
 	COALESCE(uc.user_count, 0) AS user_count,
 	COALESCE(pc.permission_count, 0) AS permission_count
 FROM
@@ -198,9 +203,9 @@ OFFSET
 
 -- name: CreateRole :exec
 INSERT INTO
-	roles (id, service_id, name, description, is_global, created_at)
+	roles (id, service_id, name, description, is_global, allow_registration, created_at)
 VALUES
-	(?, ?, ?, ?, ?, NOW());
+	(?, ?, ?, ?, ?, ?, NOW());
 
 -- name: UpdateRole :exec
 UPDATE roles
@@ -208,7 +213,8 @@ SET
 	service_id = ?,
 	name = ?,
 	description = ?,
-	is_global = ?
+	is_global = ?,
+	allow_registration = ?
 WHERE
 	id = ?;
 

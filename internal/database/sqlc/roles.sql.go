@@ -96,17 +96,18 @@ func (q *Queries) CountRolesByServiceID(ctx context.Context, arg CountRolesBySer
 
 const createRole = `-- name: CreateRole :exec
 INSERT INTO
-	roles (id, service_id, name, description, is_global, created_at)
+	roles (id, service_id, name, description, is_global, allow_registration, created_at)
 VALUES
-	(?, ?, ?, ?, ?, NOW())
+	(?, ?, ?, ?, ?, ?, NOW())
 `
 
 type CreateRoleParams struct {
-	ID          string         `json:"id"`
-	ServiceID   sql.NullString `json:"serviceId"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	IsGlobal    bool           `json:"isGlobal"`
+	ID                string         `json:"id"`
+	ServiceID         sql.NullString `json:"serviceId"`
+	Name              string         `json:"name"`
+	Description       string         `json:"description"`
+	IsGlobal          bool           `json:"isGlobal"`
+	AllowRegistration bool           `json:"allowRegistration"`
 }
 
 func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) error {
@@ -116,6 +117,7 @@ func (q *Queries) CreateRole(ctx context.Context, arg CreateRoleParams) error {
 		arg.Name,
 		arg.Description,
 		arg.IsGlobal,
+		arg.AllowRegistration,
 	)
 	return err
 }
@@ -138,7 +140,8 @@ SELECT
 	name,
 	description,
 	is_global,
-	created_at
+	created_at,
+	allow_registration
 FROM
 	roles
 WHERE
@@ -155,6 +158,7 @@ func (q *Queries) GetRoleByID(ctx context.Context, id string) (Role, error) {
 		&i.Description,
 		&i.IsGlobal,
 		&i.CreatedAt,
+		&i.AllowRegistration,
 	)
 	return i, err
 }
@@ -224,7 +228,8 @@ SELECT
 	name,
 	description,
 	is_global,
-	created_at
+	created_at,
+	allow_registration
 FROM
 	roles
 ORDER BY
@@ -256,6 +261,7 @@ func (q *Queries) ListRoles(ctx context.Context, arg ListRolesParams) ([]Role, e
 			&i.Description,
 			&i.IsGlobal,
 			&i.CreatedAt,
+			&i.AllowRegistration,
 		); err != nil {
 			return nil, err
 		}
@@ -277,7 +283,8 @@ SELECT
 	name,
 	description,
 	is_global,
-	created_at
+	created_at,
+	allow_registration
 FROM
 	roles
 WHERE
@@ -312,6 +319,7 @@ func (q *Queries) ListRolesByServiceID(ctx context.Context, arg ListRolesByServi
 			&i.Description,
 			&i.IsGlobal,
 			&i.CreatedAt,
+			&i.AllowRegistration,
 		); err != nil {
 			return nil, err
 		}
@@ -334,6 +342,7 @@ SELECT
 	r.description,
 	r.is_global,
 	r.created_at,
+	r.allow_registration,
 	COALESCE(uc.user_count, 0) AS user_count,
 	COALESCE(pc.permission_count, 0) AS permission_count
 FROM
@@ -397,14 +406,15 @@ type ListRolesWithCountsParams struct {
 }
 
 type ListRolesWithCountsRow struct {
-	ID              string         `json:"id"`
-	ServiceID       sql.NullString `json:"serviceId"`
-	Name            string         `json:"name"`
-	Description     string         `json:"description"`
-	IsGlobal        bool           `json:"isGlobal"`
-	CreatedAt       time.Time      `json:"createdAt"`
-	UserCount       int64          `json:"userCount"`
-	PermissionCount int64          `json:"permissionCount"`
+	ID                string         `json:"id"`
+	ServiceID         sql.NullString `json:"serviceId"`
+	Name              string         `json:"name"`
+	Description       string         `json:"description"`
+	IsGlobal          bool           `json:"isGlobal"`
+	CreatedAt         time.Time      `json:"createdAt"`
+	AllowRegistration bool           `json:"allowRegistration"`
+	UserCount         int64          `json:"userCount"`
+	PermissionCount   int64          `json:"permissionCount"`
 }
 
 // search: поиск по name/description. is_global: true/false — фильтр по
@@ -438,6 +448,7 @@ func (q *Queries) ListRolesWithCounts(ctx context.Context, arg ListRolesWithCoun
 			&i.Description,
 			&i.IsGlobal,
 			&i.CreatedAt,
+			&i.AllowRegistration,
 			&i.UserCount,
 			&i.PermissionCount,
 		); err != nil {
@@ -462,6 +473,7 @@ SELECT
 	r.description,
 	r.is_global,
 	r.created_at,
+	r.allow_registration,
 	COALESCE(uc.user_count, 0) AS user_count,
 	COALESCE(pc.permission_count, 0) AS permission_count
 FROM
@@ -522,14 +534,15 @@ type ListRolesWithCountsByServiceIDParams struct {
 }
 
 type ListRolesWithCountsByServiceIDRow struct {
-	ID              string         `json:"id"`
-	ServiceID       sql.NullString `json:"serviceId"`
-	Name            string         `json:"name"`
-	Description     string         `json:"description"`
-	IsGlobal        bool           `json:"isGlobal"`
-	CreatedAt       time.Time      `json:"createdAt"`
-	UserCount       int64          `json:"userCount"`
-	PermissionCount int64          `json:"permissionCount"`
+	ID                string         `json:"id"`
+	ServiceID         sql.NullString `json:"serviceId"`
+	Name              string         `json:"name"`
+	Description       string         `json:"description"`
+	IsGlobal          bool           `json:"isGlobal"`
+	CreatedAt         time.Time      `json:"createdAt"`
+	AllowRegistration bool           `json:"allowRegistration"`
+	UserCount         int64          `json:"userCount"`
+	PermissionCount   int64          `json:"permissionCount"`
 }
 
 func (q *Queries) ListRolesWithCountsByServiceID(ctx context.Context, arg ListRolesWithCountsByServiceIDParams) ([]ListRolesWithCountsByServiceIDRow, error) {
@@ -559,6 +572,7 @@ func (q *Queries) ListRolesWithCountsByServiceID(ctx context.Context, arg ListRo
 			&i.Description,
 			&i.IsGlobal,
 			&i.CreatedAt,
+			&i.AllowRegistration,
 			&i.UserCount,
 			&i.PermissionCount,
 		); err != nil {
@@ -693,17 +707,19 @@ SET
 	service_id = ?,
 	name = ?,
 	description = ?,
-	is_global = ?
+	is_global = ?,
+	allow_registration = ?
 WHERE
 	id = ?
 `
 
 type UpdateRoleParams struct {
-	ServiceID   sql.NullString `json:"serviceId"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	IsGlobal    bool           `json:"isGlobal"`
-	ID          string         `json:"id"`
+	ServiceID         sql.NullString `json:"serviceId"`
+	Name              string         `json:"name"`
+	Description       string         `json:"description"`
+	IsGlobal          bool           `json:"isGlobal"`
+	AllowRegistration bool           `json:"allowRegistration"`
+	ID                string         `json:"id"`
 }
 
 func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
@@ -712,6 +728,7 @@ func (q *Queries) UpdateRole(ctx context.Context, arg UpdateRoleParams) error {
 		arg.Name,
 		arg.Description,
 		arg.IsGlobal,
+		arg.AllowRegistration,
 		arg.ID,
 	)
 	return err

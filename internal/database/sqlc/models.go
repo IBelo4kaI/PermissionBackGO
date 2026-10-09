@@ -93,12 +93,13 @@ type Permission struct {
 }
 
 type Role struct {
-	ID          string         `json:"id"`
-	ServiceID   sql.NullString `json:"serviceId"`
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	IsGlobal    bool           `json:"isGlobal"`
-	CreatedAt   time.Time      `json:"createdAt"`
+	ID                string         `json:"id"`
+	ServiceID         sql.NullString `json:"serviceId"`
+	Name              string         `json:"name"`
+	Description       string         `json:"description"`
+	IsGlobal          bool           `json:"isGlobal"`
+	CreatedAt         time.Time      `json:"createdAt"`
+	AllowRegistration bool           `json:"allowRegistration"`
 }
 
 type RolePermission struct {

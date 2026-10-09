@@ -131,7 +131,7 @@ func (h *Handler) Create(c fiber.Ctx) error {
 	user, err := h.service.Create(c.Context(), req)
 	if err != nil {
 		switch {
-		case errors.Is(err, ErrGenderNotFound), errors.Is(err, ErrUsernameExists):
+		case errors.Is(err, ErrGenderNotFound), errors.Is(err, ErrUsernameExists), errors.Is(err, ErrRoleNotFound), errors.Is(err, ErrRoleNotAllowedOnRegistration):
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		default:
 			return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")

@@ -61,12 +61,13 @@ func fromListUsersByServiceIDRow(r repo.ListUsersByServiceIDRow) userRow {
 // счётчики (user_count, permissions_count) остаются нулевыми, как в Python-версии.
 func fromRole(r repo.Role) role.RoleResponse {
 	return role.RoleResponse{
-		ID:          r.ID,
-		ServiceID:   nullable.StringOrNil(r.ServiceID),
-		Name:        r.Name,
-		Description: r.Description,
-		IsGlobal:    r.IsGlobal,
-		CreatedAt:   r.CreatedAt,
+		ID:                r.ID,
+		ServiceID:         nullable.StringOrNil(r.ServiceID),
+		Name:              r.Name,
+		Description:       r.Description,
+		IsGlobal:          r.IsGlobal,
+		AllowRegistration: r.AllowRegistration,
+		CreatedAt:         r.CreatedAt,
 	}
 }
 

@@ -11,22 +11,24 @@ import (
 // is_global — в Python это int (0/1), здесь bool: так его отдаёт sqlc для
 // TINYINT-колонки (единственное сознательное отступление от контракта).
 type RoleResponse struct {
-	ID               string    `json:"id"`
-	ServiceID        *string   `json:"service_id,omitempty"`
-	Name             string    `json:"name"`
-	Description      string    `json:"description"`
-	IsGlobal         bool      `json:"is_global"`
-	ServiceName      string    `json:"service_name,omitempty"`
-	CreatedAt        time.Time `json:"created_at"`
-	UserCount        int64     `json:"user_count"`
-	PermissionsCount int64     `json:"permissions_count"`
+	ID                string    `json:"id"`
+	ServiceID         *string   `json:"service_id,omitempty"`
+	Name              string    `json:"name"`
+	Description       string    `json:"description"`
+	IsGlobal          bool      `json:"is_global"`
+	AllowRegistration bool      `json:"allow_registration" description:"Можно ли выбрать эту роль при регистрации"`
+	ServiceName       string    `json:"service_name,omitempty"`
+	CreatedAt         time.Time `json:"created_at"`
+	UserCount         int64     `json:"user_count"`
+	PermissionsCount  int64     `json:"permissions_count"`
 }
 
 type UpsertRequest struct {
-	ServiceID   *string `json:"service_id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	IsGlobal    bool    `json:"is_global"`
+	ServiceID         *string `json:"service_id"`
+	Name              string  `json:"name"`
+	Description       string  `json:"description"`
+	IsGlobal          bool    `json:"is_global"`
+	AllowRegistration bool    `json:"allow_registration"`
 }
 
 // RoleIDRequest — ID роли в path-параметре :role_id.
@@ -36,11 +38,12 @@ type RoleIDRequest struct {
 
 // UpdateRoleRequest — как UpsertRequest, но с ID роли в path-параметре.
 type UpdateRoleRequest struct {
-	RoleID      string  `uri:"role_id"`
-	ServiceID   *string `json:"service_id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	IsGlobal    bool    `json:"is_global"`
+	RoleID            string  `uri:"role_id"`
+	ServiceID         *string `json:"service_id"`
+	Name              string  `json:"name"`
+	Description       string  `json:"description"`
+	IsGlobal          bool    `json:"is_global"`
+	AllowRegistration bool    `json:"allow_registration"`
 }
 
 // ListRequest — query-параметры GET /roles/. Расширяет apidoc.Pagination

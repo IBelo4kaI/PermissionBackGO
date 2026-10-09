@@ -118,11 +118,12 @@ func (s *Service) Create(ctx context.Context, req UpsertRequest) (RoleResponse, 
 	id := uuid.NewString()
 
 	err := s.queries.CreateRole(ctx, repo.CreateRoleParams{
-		ID:          id,
-		ServiceID:   nullable.StringPtr(req.ServiceID),
-		Name:        req.Name,
-		Description: req.Description,
-		IsGlobal:    req.IsGlobal,
+		ID:                id,
+		ServiceID:         nullable.StringPtr(req.ServiceID),
+		Name:              req.Name,
+		Description:       req.Description,
+		IsGlobal:          req.IsGlobal,
+		AllowRegistration: req.AllowRegistration,
 	})
 	if err != nil {
 		return RoleResponse{}, err
@@ -137,11 +138,12 @@ func (s *Service) Update(ctx context.Context, id string, req UpsertRequest) (Rol
 	}
 
 	err := s.queries.UpdateRole(ctx, repo.UpdateRoleParams{
-		ServiceID:   nullable.StringPtr(req.ServiceID),
-		Name:        req.Name,
-		Description: req.Description,
-		IsGlobal:    req.IsGlobal,
-		ID:          id,
+		ServiceID:         nullable.StringPtr(req.ServiceID),
+		Name:              req.Name,
+		Description:       req.Description,
+		IsGlobal:          req.IsGlobal,
+		AllowRegistration: req.AllowRegistration,
+		ID:                id,
 	})
 	if err != nil {
 		return RoleResponse{}, err
