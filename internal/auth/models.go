@@ -14,6 +14,16 @@ type LoginResult struct {
 	ExpiresAt time.Time `json:"expires_at" format:"date-time" description:"Token expiration time"`
 }
 
+type SessionInfoResponse struct {
+	ExpiresAt        time.Time `json:"expires_at" format:"date-time" description:"Session expiration time"`
+	RemainingSeconds int64     `json:"remaining_seconds" example:"3600" description:"Seconds left until the session expires"`
+	NeverExpires     bool      `json:"never_expires" description:"Session has no expiration"`
+}
+
+type ExtendSessionRequest struct {
+	ExtendSeconds int `json:"extend_seconds" validate:"required,min=60,max=2592000" example:"3600" description:"Seconds to add to the current session expiration (60..2592000)"`
+}
+
 type ValidateSessionResponse struct {
 	Valid bool `json:"valid" example:"true" description:"Whether the provided session is valid"`
 }

@@ -114,6 +114,7 @@ type Querier interface {
 	UpdatePermission(ctx context.Context, arg UpdatePermissionParams) error
 	UpdateRole(ctx context.Context, arg UpdateRoleParams) error
 	UpdateService(ctx context.Context, arg UpdateServiceParams) error
+	UpdateSessionExpiresAt(ctx context.Context, arg UpdateSessionExpiresAtParams) error
 	// Частичное обновление: sqlc.narg-поля, для которых передан NULL, остаются без изменений.
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpsertSMTPSettings(ctx context.Context, arg UpsertSMTPSettingsParams) error

@@ -101,6 +101,66 @@ func (s *Service) ValidateSession(ctx context.Context, rawToken string) (bool, e
 	return true, nil
 }
 
+func (s *Service) SessionInfo(ctx context.Context, rawToken string) (SessionInfoResponse, error) {
+	session, err := s.activeSession(ctx, rawToken)
+	if err != nil {
+		return SessionInfoResponse{}, err
+	}
+	return newSessionInfo(session.ExpiresAt), nil
+}
+
+// ExtendSession сдвигает expires_at на req.ExtendSeconds вперёд от текущего
+// значения, но не дальше maxSessionTTLSeconds от текущего момента.
+func (s *Service) ExtendSession(ctx context.Context, rawToken string, req ExtendSessionRequest) (SessionInfoResponse, error) {
+	session, err := s.activeSession(ctx, rawToken)
+	if err != nil {
+		return SessionInfoResponse{}, err
+	}
+	if !session.ExpiresAt.Before(neverExpiresAt) {
+		return SessionInfoResponse{}, ErrSessionNeverExpires
+	}
+
+	expiresAt := session.ExpiresAt.Add(time.Duration(req.ExtendSeconds) * time.Second)
+	if expiresAt.After(time.Now().UTC().Add(maxSessionTTLSeconds * time.Second)) {
+		return SessionInfoResponse{}, ErrSessionExtendTooLong
+	}
+
+	if err := s.queries.UpdateSessionExpiresAt(ctx, repo.UpdateSessionExpiresAtParams{
+		ExpiresAt: expiresAt,
+		TokenHash: token.Hash(rawToken),
+	}); err != nil {
+		return SessionInfoResponse{}, err
+	}
+
+	return newSessionInfo(expiresAt), nil
+}
+
+func (s *Service) activeSession(ctx context.Context, rawToken string) (repo.GetSessionByTokenHashRow, error) {
+	if rawToken == "" {
+		return repo.GetSessionByTokenHashRow{}, ErrSessionTokenMissing
+	}
+	session, err := s.queries.GetSessionByTokenHash(ctx, token.Hash(rawToken))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return repo.GetSessionByTokenHashRow{}, ErrInvalidSession
+		}
+		return repo.GetSessionByTokenHashRow{}, err
+	}
+	return session, nil
+}
+
+func newSessionInfo(expiresAt time.Time) SessionInfoResponse {
+	remaining := int64(time.Until(expiresAt).Seconds())
+	if remaining < 0 {
+		remaining = 0
+	}
+	return SessionInfoResponse{
+		ExpiresAt:        expiresAt,
+		RemainingSeconds: remaining,
+		NeverExpires:     !expiresAt.Before(neverExpiresAt),
+	}
+}
+
 // Logout удаляет сессию по сырому токену (в БД хранится только его SHA-256 хэш).
 // Идемпотентен: если сессия уже не существует (например, истекла), ошибки нет.
 func (s *Service) Logout(ctx context.Context, rawToken string) error {

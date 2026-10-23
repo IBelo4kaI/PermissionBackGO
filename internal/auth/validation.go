@@ -21,6 +21,13 @@ func (r LoginRequest) Validate() error {
 	return nil
 }
 
+func (r ExtendSessionRequest) Validate() error {
+	if r.ExtendSeconds < minSessionTTLSeconds || r.ExtendSeconds > maxSessionTTLSeconds {
+		return ErrExtendSecondsInvalid
+	}
+	return nil
+}
+
 func (r ForgotPasswordRequest) Validate() error {
 	if r.Username == "" {
 		return ErrUsernameRequired

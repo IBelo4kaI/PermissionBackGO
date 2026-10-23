@@ -101,3 +101,21 @@ func (q *Queries) GetSessionByTokenHash(ctx context.Context, tokenHash string) (
 	)
 	return i, err
 }
+
+const updateSessionExpiresAt = `-- name: UpdateSessionExpiresAt :exec
+UPDATE sessions
+SET
+	expires_at = ?
+WHERE
+	token_hash = ?
+`
+
+type UpdateSessionExpiresAtParams struct {
+	ExpiresAt time.Time `json:"expiresAt"`
+	TokenHash string    `json:"tokenHash"`
+}
+
+func (q *Queries) UpdateSessionExpiresAt(ctx context.Context, arg UpdateSessionExpiresAtParams) error {
+	_, err := q.db.ExecContext(ctx, updateSessionExpiresAt, arg.ExpiresAt, arg.TokenHash)
+	return err
+}

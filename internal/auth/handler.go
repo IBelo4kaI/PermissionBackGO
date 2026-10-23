@@ -66,6 +66,55 @@ func (h *Handler) ValidateSession(c fiber.Ctx) error {
 	return c.JSON(ValidateSessionResponse{Valid: valid})
 }
 
+func (h *Handler) SessionInfo(c fiber.Ctx) error {
+	info, err := h.service.SessionInfo(c.Context(), c.Cookies("session"))
+	if err != nil {
+		return sessionError(err)
+	}
+	return c.JSON(info)
+}
+
+func (h *Handler) ExtendSession(c fiber.Ctx) error {
+	var req ExtendSessionRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Невалидное тело запроса")
+	}
+	if err := req.Validate(); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
+	info, err := h.service.ExtendSession(c.Context(), c.Cookies("session"), req)
+	if err != nil {
+		return sessionError(err)
+	}
+
+	if !info.NeverExpires {
+		c.Cookie(&fiber.Cookie{
+			Name:     "session",
+			Path:     "/",
+			HTTPOnly: true,
+			SameSite: "Lax",
+			Value:    c.Cookies("session"),
+			Expires:  info.ExpiresAt,
+			Secure:   h.cookieSecure,
+			Domain:   h.cookieDomain,
+		})
+	}
+
+	return c.JSON(info)
+}
+
+func sessionError(err error) error {
+	switch {
+	case errors.Is(err, ErrSessionTokenMissing), errors.Is(err, ErrInvalidSession):
+		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
+	case errors.Is(err, ErrSessionNeverExpires), errors.Is(err, ErrSessionExtendTooLong):
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	default:
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+}
+
 // Logout удаляет сессию пользователя и очищает cookie "session".
 func (h *Handler) Logout(c fiber.Ctx) error {
 	sessionToken := c.Cookies("session")

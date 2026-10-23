@@ -17,6 +17,13 @@ INSERT INTO
 VALUES
 	(?, ?, ?, ?);
 
+-- name: UpdateSessionExpiresAt :exec
+UPDATE sessions
+SET
+	expires_at = ?
+WHERE
+	token_hash = ?;
+
 -- name: DeleteSessionsByUserID :exec
 -- Нужно вызывать перед удалением пользователя (FK sessions.user_id -> users.id).
 DELETE FROM sessions

@@ -3,15 +3,18 @@ package auth
 import "errors"
 
 var (
-	ErrEmailTaken          = errors.New("Почта уже используется")
-	ErrInvalidCredentials  = errors.New("Неверная почта или пароль")
-	ErrUserInactive        = errors.New("Аккаунт пользователя неактивен, обратитесь к администратору")
-	ErrUsernameRequired    = errors.New("Почта обязательна")
-	ErrPasswordRequired    = errors.New("Пароль обязателен")
-	ErrInvalidSession      = errors.New("Недействительная сессия")
-	ErrInvalidSessionTTL   = errors.New("session_ttl_seconds должен быть от 60 до 2592000")
-	ErrSessionTTLConflict  = errors.New("never_expires нельзя использовать вместе с session_ttl_seconds")
-	ErrSessionTokenMissing = errors.New("Session token missing")
+	ErrEmailTaken           = errors.New("Почта уже используется")
+	ErrInvalidCredentials   = errors.New("Неверная почта или пароль")
+	ErrUserInactive         = errors.New("Аккаунт пользователя неактивен, обратитесь к администратору")
+	ErrUsernameRequired     = errors.New("Почта обязательна")
+	ErrPasswordRequired     = errors.New("Пароль обязателен")
+	ErrInvalidSession       = errors.New("Недействительная сессия")
+	ErrInvalidSessionTTL    = errors.New("session_ttl_seconds должен быть от 60 до 2592000")
+	ErrSessionTTLConflict   = errors.New("never_expires нельзя использовать вместе с session_ttl_seconds")
+	ErrExtendSecondsInvalid = errors.New("extend_seconds должен быть от 60 до 2592000")
+	ErrSessionNeverExpires  = errors.New("Бессрочную сессию продлевать не нужно")
+	ErrSessionExtendTooLong = errors.New("Сессию нельзя продлить дальше чем на 30 дней от текущего момента")
+	ErrSessionTokenMissing  = errors.New("Session token missing")
 
 	ErrTokenRequired       = errors.New("token обязателен")
 	ErrNewPasswordRequired = errors.New("new_password обязателен")

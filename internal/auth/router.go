@@ -23,6 +23,20 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 			Tags:    []string{"Авторизация"},
 		}))
 
+	ftonic.For[any, SessionInfoResponse](schema).
+		GET(group, "/session", h.SessionInfo, ftonic.WithOperation(docs.OperationObject{
+			Summary:     "Сколько времени осталось до конца сессии",
+			Description: "Требует валидную cookie-сессию.",
+			Tags:        []string{"Авторизация"},
+		}))
+
+	ftonic.For[ExtendSessionRequest, SessionInfoResponse](schema).
+		POST(group, "/session/extend", h.ExtendSession, ftonic.WithOperation(docs.OperationObject{
+			Summary:     "Продлить сессию на указанное время",
+			Description: "Добавляет extend_seconds к текущему сроку, но не более 30 дней от текущего момента. Обновляет cookie.",
+			Tags:        []string{"Авторизация"},
+		}))
+
 	ftonic.For[any, LogoutResponse](schema).
 		POST(group, "/logout", h.Logout, ftonic.WithOperation(docs.OperationObject{
 			Summary: "Выход из системы и удаление сессии",
