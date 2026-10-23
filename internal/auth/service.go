@@ -155,7 +155,7 @@ func newSessionInfo(expiresAt time.Time) SessionInfoResponse {
 		remaining = 0
 	}
 	return SessionInfoResponse{
-		ExpiresAt:        expiresAt,
+		ExpiresAt:        expiresAt.In(time.Local),
 		RemainingSeconds: remaining,
 		NeverExpires:     !expiresAt.Before(neverExpiresAt),
 	}
