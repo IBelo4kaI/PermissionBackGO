@@ -39,6 +39,7 @@ WHERE
 	OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
 	OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
 	OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.nickname LIKE CONCAT('%', CAST(? AS char), '%')
 `
 
 type CountUsersParams struct {
@@ -73,6 +74,7 @@ WHERE
 		OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
 		OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
 		OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.nickname LIKE CONCAT('%', CAST(? AS char), '%')
 	)
 `
 
@@ -97,9 +99,9 @@ func (q *Queries) CountUsersByServiceID(ctx context.Context, arg CountUsersBySer
 
 const createUser = `-- name: CreateUser :exec
 INSERT INTO
-	users (id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at)
+	users (id, name, surname, patronymic, username, nickname, gender_id, birthday, password, status, created_at)
 VALUES
-	(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
 `
 
 type CreateUserParams struct {
@@ -108,6 +110,7 @@ type CreateUserParams struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
+	Nickname   sql.NullString `json:"nickname"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Password   string         `json:"password"`
@@ -121,6 +124,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.Surname,
 		arg.Patronymic,
 		arg.Username,
+		arg.Nickname,
 		arg.GenderID,
 		arg.Birthday,
 		arg.Password,
@@ -147,6 +151,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -164,6 +169,7 @@ type GetUserByIDRow struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
+	Nickname   sql.NullString `json:"nickname"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Password   string         `json:"password"`
@@ -180,6 +186,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 		&i.Surname,
 		&i.Patronymic,
 		&i.Username,
+		&i.Nickname,
 		&i.GenderID,
 		&i.Birthday,
 		&i.Password,
@@ -196,6 +203,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -213,6 +221,7 @@ type GetUserByUsernameRow struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
+	Nickname   sql.NullString `json:"nickname"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Password   string         `json:"password"`
@@ -229,6 +238,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 		&i.Surname,
 		&i.Patronymic,
 		&i.Username,
+		&i.Nickname,
 		&i.GenderID,
 		&i.Birthday,
 		&i.Password,
@@ -245,6 +255,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -262,6 +273,7 @@ type ListAllUsersRow struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
+	Nickname   sql.NullString `json:"nickname"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Password   string         `json:"password"`
@@ -284,6 +296,7 @@ func (q *Queries) ListAllUsers(ctx context.Context) ([]ListAllUsersRow, error) {
 			&i.Surname,
 			&i.Patronymic,
 			&i.Username,
+			&i.Nickname,
 			&i.GenderID,
 			&i.Birthday,
 			&i.Password,
@@ -357,6 +370,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -370,6 +384,7 @@ WHERE
 	OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
 	OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
 	OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
+	OR u.nickname LIKE CONCAT('%', CAST(? AS char), '%')
 ORDER BY
 	CASE
 		WHEN CAST(? AS char) = 'asc' THEN CASE CAST(? AS char)
@@ -377,6 +392,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -388,6 +404,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -413,6 +430,7 @@ type ListUsersRow struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
+	Nickname   sql.NullString `json:"nickname"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Password   string         `json:"password"`
@@ -450,6 +468,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 			&i.Surname,
 			&i.Patronymic,
 			&i.Username,
+			&i.Nickname,
 			&i.GenderID,
 			&i.Birthday,
 			&i.Password,
@@ -476,6 +495,7 @@ SELECT DISTINCT
 	u.surname,
 	u.patronymic,
 	u.username,
+	u.nickname,
 	u.gender_id,
 	u.birthday,
 	u.password,
@@ -493,6 +513,7 @@ WHERE
 		OR u.surname LIKE CONCAT('%', CAST(? AS char), '%')
 		OR u.patronymic LIKE CONCAT('%', CAST(? AS char), '%')
 		OR u.username LIKE CONCAT('%', CAST(? AS char), '%')
+		OR u.nickname LIKE CONCAT('%', CAST(? AS char), '%')
 	)
 ORDER BY
 	CASE
@@ -501,6 +522,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -512,6 +534,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -538,6 +561,7 @@ type ListUsersByServiceIDRow struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
+	Nickname   sql.NullString `json:"nickname"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Password   string         `json:"password"`
@@ -573,6 +597,7 @@ func (q *Queries) ListUsersByServiceID(ctx context.Context, arg ListUsersByServi
 			&i.Surname,
 			&i.Patronymic,
 			&i.Username,
+			&i.Nickname,
 			&i.GenderID,
 			&i.Birthday,
 			&i.Password,
@@ -616,6 +641,7 @@ SET
 	surname = COALESCE(?, surname),
 	patronymic = COALESCE(?, patronymic),
 	username = COALESCE(?, username),
+	nickname = COALESCE(?, nickname),
 	birthday = COALESCE(?, birthday),
 	status = COALESCE(?, status),
 	gender_id = COALESCE(?, gender_id),
@@ -629,6 +655,7 @@ type UpdateUserParams struct {
 	Surname    sql.NullString  `json:"surname"`
 	Patronymic sql.NullString  `json:"patronymic"`
 	Username   sql.NullString  `json:"username"`
+	Nickname   sql.NullString  `json:"nickname"`
 	Birthday   sql.NullTime    `json:"birthday"`
 	Status     NullUsersStatus `json:"status"`
 	GenderID   sql.NullString  `json:"genderId"`
@@ -643,6 +670,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Surname,
 		arg.Patronymic,
 		arg.Username,
+		arg.Nickname,
+		arg.Nickname,
 		arg.Birthday,
 		arg.Status,
 		arg.GenderID,

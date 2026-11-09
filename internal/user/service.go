@@ -191,6 +191,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 		Surname:    req.Surname,
 		Patronymic: nullable.StringPtr(&req.Patronymic),
 		Username:   req.Username,
+		Nickname:   nullable.StringPtr(&req.Nickname),
 		GenderID:   req.GenderID,
 		Birthday:   req.Birthday,
 		Password:   password,
@@ -244,6 +245,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Use
 		Surname:    nullable.StringPtr(req.Surname),
 		Patronymic: nullable.StringPtr(req.Patronymic),
 		Username:   nullable.StringPtr(req.Username),
+		Nickname:   nullable.StringPtr(req.Nickname),
 		Birthday:   nullable.TimePtr(req.Birthday),
 		Status:     nullableStatusPtr(req.Status),
 		GenderID:   nullable.StringPtr(req.GenderID),
@@ -442,7 +444,8 @@ func filterUserRows(rows []userRow, search *string) []userRow {
 		if strings.Contains(strings.ToLower(r.Name), needle) ||
 			strings.Contains(strings.ToLower(r.Surname), needle) ||
 			strings.Contains(strings.ToLower(r.Patronymic.String), needle) ||
-			strings.Contains(strings.ToLower(r.Username), needle) {
+			strings.Contains(strings.ToLower(r.Username), needle) ||
+			strings.Contains(strings.ToLower(r.Nickname.String), needle) {
 			filtered = append(filtered, r)
 		}
 	}
@@ -461,6 +464,8 @@ func sortUserRows(rows []userRow, sortBy, sortDir string) {
 			return rows[i].Patronymic.String < rows[j].Patronymic.String
 		case "username":
 			return rows[i].Username < rows[j].Username
+		case "nickname":
+			return rows[i].Nickname.String < rows[j].Nickname.String
 		case "birthday":
 			return rows[i].Birthday.Before(rows[j].Birthday)
 		case "status":

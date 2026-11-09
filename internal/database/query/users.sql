@@ -5,6 +5,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -22,6 +23,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -42,6 +44,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -55,6 +58,7 @@ WHERE
 	OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 ORDER BY
 	CASE
 		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
@@ -62,6 +66,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -73,6 +78,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -93,7 +99,8 @@ WHERE
 	OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%');
+	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%');
 
 -- name: ListAllUsers :many
 SELECT
@@ -102,6 +109,7 @@ SELECT
 	surname,
 	patronymic,
 	username,
+	nickname,
 	gender_id,
 	birthday,
 	password,
@@ -119,6 +127,7 @@ SELECT DISTINCT
 	u.surname,
 	u.patronymic,
 	u.username,
+	u.nickname,
 	u.gender_id,
 	u.birthday,
 	u.password,
@@ -136,6 +145,7 @@ WHERE
 		OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 		OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 		OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	)
 ORDER BY
 	CASE
@@ -144,6 +154,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -155,6 +166,7 @@ ORDER BY
 			WHEN 'surname' THEN CAST(u.surname AS char)
 			WHEN 'patronymic' THEN CAST(u.patronymic AS char)
 			WHEN 'username' THEN CAST(u.username AS char)
+			WHEN 'nickname' THEN CAST(u.nickname AS char)
 			WHEN 'birthday' THEN CAST(u.birthday AS char)
 			WHEN 'status' THEN CAST(u.status AS char)
 			ELSE CAST(u.created_at AS char)
@@ -180,13 +192,14 @@ WHERE
 		OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 		OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 		OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	);
 
 -- name: CreateUser :exec
 INSERT INTO
-	users (id, name, surname, patronymic, username, gender_id, birthday, password, status, created_at)
+	users (id, name, surname, patronymic, username, nickname, gender_id, birthday, password, status, created_at)
 VALUES
-	(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: UpdateUser :exec
 -- Частичное обновление: sqlc.narg-поля, для которых передан NULL, остаются без изменений.
@@ -196,6 +209,7 @@ SET
 	surname = COALESCE(sqlc.narg ('surname'), surname),
 	patronymic = COALESCE(sqlc.narg ('patronymic'), patronymic),
 	username = COALESCE(sqlc.narg ('username'), username),
+	nickname = COALESCE(sqlc.narg ('nickname'), nickname),
 	birthday = COALESCE(sqlc.narg ('birthday'), birthday),
 	status = COALESCE(sqlc.narg ('status'), status),
 	gender_id = COALESCE(sqlc.narg ('gender_id'), gender_id),

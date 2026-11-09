@@ -102,6 +102,7 @@ type AcceptRequest struct {
 	Surname    string    `json:"surname"`
 	Patronymic string    `json:"patronymic"`
 	Username   string    `json:"username"`
+	Nickname   string    `json:"nickname"`
 	Birthday   time.Time `json:"birthday"`
 	GenderID   string    `json:"gender_id"`
 	Password   string    `json:"password"`

@@ -18,6 +18,7 @@ type UserResponse struct {
 	Surname    string              `json:"surname"`
 	Patronymic *string             `json:"patronymic"`
 	Username   string              `json:"username"`
+	Nickname   *string             `json:"nickname"`
 	Birthday   time.Time           `json:"birthday"`
 	Status     repo.UsersStatus    `json:"status"`
 	CreatedAt  time.Time           `json:"created_at"`
@@ -31,6 +32,7 @@ type CreateRequest struct {
 	Surname    string    `json:"surname"`
 	Patronymic string    `json:"patronymic"`
 	Username   string    `json:"username"`
+	Nickname   string    `json:"nickname"`
 	Birthday   time.Time `json:"birthday"`
 	GenderID   string    `json:"gender_id"`
 	Password   string    `json:"password"`
@@ -43,6 +45,7 @@ type UpdateRequest struct {
 	Surname    *string    `json:"surname"`
 	Patronymic *string    `json:"patronymic"`
 	Username   *string    `json:"username"`
+	Nickname   *string    `json:"nickname"`
 	Birthday   *time.Time `json:"birthday"`
 	Status     *string    `json:"status"`
 	GenderID   *string    `json:"gender_id"`
@@ -61,6 +64,7 @@ type UpdateUserRequest struct {
 	Surname    *string    `json:"surname"`
 	Patronymic *string    `json:"patronymic"`
 	Username   *string    `json:"username"`
+	Nickname   *string    `json:"nickname"`
 	Birthday   *time.Time `json:"birthday"`
 	Status     *string    `json:"status"`
 	GenderID   *string    `json:"gender_id"`
@@ -76,13 +80,13 @@ type ListByServiceRequest struct {
 	ServiceID string `uri:"service_id"`
 	Page      int    `query:"page" validate:"omitempty,min=1"`
 	Limit     int    `query:"limit" validate:"omitempty,min=1,max=100"`
-	Search    string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/surname/patronymic/username"`
-	SortBy    string `query:"sort_by" description:"name, surname, patronymic, username, birthday, status или created_at (по умолчанию created_at)"`
+	Search    string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/surname/patronymic/username/nickname"`
+	SortBy    string `query:"sort_by" description:"name, surname, patronymic, username, nickname, birthday, status или created_at (по умолчанию created_at)"`
 	SortDir   string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
 }
 
 // SortableColumns — белый список для sort_by в List/ListByServiceID (см. query.QuerySort).
-var SortableColumns = []string{"name", "surname", "patronymic", "username", "birthday", "status", "created_at"}
+var SortableColumns = []string{"name", "surname", "patronymic", "username", "nickname", "birthday", "status", "created_at"}
 
 const DefaultSortColumn = "created_at"
 
@@ -96,8 +100,8 @@ type MePermissionsRequest struct {
 // ListAllRequest — query-параметры GET /users/all. Список без пагинации,
 // поэтому search/sort применяются на срезе в Go (см. Service.ListAll).
 type ListAllRequest struct {
-	Search  string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/surname/patronymic/username"`
-	SortBy  string `query:"sort_by" description:"name, surname, patronymic, username, birthday, status или created_at (по умолчанию created_at)"`
+	Search  string `query:"search" validate:"omitempty,max=255" description:"Поиск по name/surname/patronymic/username/nickname"`
+	SortBy  string `query:"sort_by" description:"name, surname, patronymic, username, nickname, birthday, status или created_at (по умолчанию created_at)"`
 	SortDir string `query:"sort_dir" validate:"omitempty,oneof=asc desc" description:"asc или desc (по умолчанию desc)"`
 }
 

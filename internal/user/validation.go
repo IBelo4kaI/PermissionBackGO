@@ -1,5 +1,7 @@
 package user
 
+import "unicode/utf8"
+
 func (r CreateRequest) Validate() error {
 	if r.Name == "" {
 		return ErrNameRequired
@@ -18,6 +20,13 @@ func (r CreateRequest) Validate() error {
 	}
 	if r.GenderID == "" {
 		return ErrGenderRequired
+	}
+	return validateNickname(&r.Nickname)
+}
+
+func validateNickname(n *string) error {
+	if n != nil && utf8.RuneCountInString(*n) > 100 {
+		return ErrNicknameTooLong
 	}
 	return nil
 }
