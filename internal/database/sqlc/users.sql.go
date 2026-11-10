@@ -53,6 +53,7 @@ func (q *Queries) CountUsers(ctx context.Context, arg CountUsersParams) (int64, 
 		arg.Search,
 		arg.Search,
 		arg.Search,
+		arg.Search,
 	)
 	var total int64
 	err := row.Scan(&total)
@@ -86,6 +87,7 @@ type CountUsersByServiceIDParams struct {
 func (q *Queries) CountUsersByServiceID(ctx context.Context, arg CountUsersByServiceIDParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countUsersByServiceID,
 		arg.ServiceID,
+		arg.Search,
 		arg.Search,
 		arg.Search,
 		arg.Search,
@@ -448,6 +450,7 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 		arg.Search,
 		arg.Search,
 		arg.Search,
+		arg.Search,
 		arg.SortDir,
 		arg.SortBy,
 		arg.SortDir,
@@ -577,6 +580,7 @@ func (q *Queries) ListUsersByServiceID(ctx context.Context, arg ListUsersByServi
 		arg.Search,
 		arg.Search,
 		arg.Search,
+		arg.Search,
 		arg.SortDir,
 		arg.SortBy,
 		arg.SortDir,
@@ -670,7 +674,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Surname,
 		arg.Patronymic,
 		arg.Username,
-		arg.Nickname,
 		arg.Nickname,
 		arg.Birthday,
 		arg.Status,

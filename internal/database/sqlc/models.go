@@ -145,12 +145,12 @@ type User struct {
 	Surname    string         `json:"surname"`
 	Patronymic sql.NullString `json:"patronymic"`
 	Username   string         `json:"username"`
-	Nickname   sql.NullString `json:"nickname"`
 	Password   string         `json:"password"`
 	GenderID   string         `json:"genderId"`
 	Birthday   time.Time      `json:"birthday"`
 	Status     UsersStatus    `json:"status"`
 	CreatedAt  time.Time      `json:"createdAt"`
+	Nickname   sql.NullString `json:"nickname"`
 }
 
 type UserRole struct {
