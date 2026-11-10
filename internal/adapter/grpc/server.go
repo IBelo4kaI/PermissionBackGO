@@ -102,7 +102,7 @@ func (s *Servers) GetUsers(ctx context.Context, req *GetUsersRequest) (*GetUsers
 
 	users := make([]*UserResponse, 0, len(rows))
 	for _, u := range rows {
-		users = append(users, &UserResponse{Id: u.ID, Name: u.Name, Surname: u.Surname})
+		users = append(users, &UserResponse{Id: u.ID, Name: u.Name, Surname: u.Surname, Nickname: u.Nickname.String})
 	}
 
 	return &GetUsersResponse{Users: users, Message: strPtr("Разрешение получено"), Code: 200}, nil

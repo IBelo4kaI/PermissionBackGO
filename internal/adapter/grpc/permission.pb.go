@@ -222,6 +222,7 @@ type UserResponse struct {
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Surname       string                 `protobuf:"bytes,3,opt,name=surname,proto3" json:"surname,omitempty"`
+	Nickname      string                 `protobuf:"bytes,4,opt,name=nickname,proto3" json:"nickname,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -273,6 +274,13 @@ func (x *UserResponse) GetName() string {
 func (x *UserResponse) GetSurname() string {
 	if x != nil {
 		return x.Surname
+	}
+	return ""
+}
+
+func (x *UserResponse) GetNickname() string {
+	if x != nil {
+		return x.Nickname
 	}
 	return ""
 }
@@ -358,11 +366,12 @@ const file_proto_permission_proto_rawDesc = "" +
 	"\x0fGetUsersRequest\x12V\n" +
 	"\x12permission_request\x18\x01 \x01(\v2'.generated.permission.PermissionRequestR\x11permissionRequest\x12\x1f\n" +
 	"\vonly_active\x18\x02 \x01(\bR\n" +
-	"onlyActive\"L\n" +
+	"onlyActive\"h\n" +
 	"\fUserResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x18\n" +
-	"\asurname\x18\x03 \x01(\tR\asurname\"\x8b\x01\n" +
+	"\asurname\x18\x03 \x01(\tR\asurname\x12\x1a\n" +
+	"\bnickname\x18\x04 \x01(\tR\bnickname\"\x8b\x01\n" +
 	"\x10GetUsersResponse\x128\n" +
 	"\x05users\x18\x01 \x03(\v2\".generated.permission.UserResponseR\x05users\x12\x1d\n" +
 	"\amessage\x18\x02 \x01(\tH\x00R\amessage\x88\x01\x01\x12\x12\n" +
