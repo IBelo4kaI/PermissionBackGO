@@ -14,7 +14,8 @@ func TestCompatiblePhoneColumn(t *testing.T) {
 		{"varchar", "YES", 32, true, true},
 		{"varchar", "YES", 255, true, true},
 		{"varchar", "NO", 32, true, false},
-		{"varchar", "YES", 16, true, false},
+		{"varchar", "YES", 18, true, true},
+		{"varchar", "YES", 17, true, false},
 		{"bigint", "YES", 32, true, false},
 		{"varchar", "YES", 0, false, false},
 	} {

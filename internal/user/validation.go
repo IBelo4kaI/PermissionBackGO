@@ -35,7 +35,7 @@ func validateNickname(n *string) error {
 }
 
 func validatePhone(p *string) error {
-	if p != nil && utf8.RuneCountInString(*p) > 32 {
+	if p != nil && utf8.RuneCountInString(*p) > 18 {
 		return ErrPhoneTooLong
 	}
 	return nil

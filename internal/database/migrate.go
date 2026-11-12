@@ -167,7 +167,7 @@ func existingPhoneColumn(ctx context.Context, db *sql.DB) (bool, error) {
 		return false, fmt.Errorf("inspect users.phone: %w", err)
 	}
 	if !compatiblePhoneColumn(dataType, nullable, length) {
-		return false, fmt.Errorf("existing users.phone is incompatible: type %s, nullable %s, length %v; expected a nullable string column of at least 32 characters", dataType, nullable, length)
+		return false, fmt.Errorf("existing users.phone is incompatible: type %s, nullable %s, length %v; expected a nullable string column of at least 18 characters", dataType, nullable, length)
 	}
 	return true, nil
 }
@@ -175,7 +175,7 @@ func existingPhoneColumn(ctx context.Context, db *sql.DB) (bool, error) {
 func compatiblePhoneColumn(dataType, nullable string, length sql.NullInt64) bool {
 	switch strings.ToLower(dataType) {
 	case "char", "varchar", "tinytext", "text", "mediumtext", "longtext":
-		return strings.EqualFold(nullable, "YES") && length.Valid && length.Int64 >= 32
+		return strings.EqualFold(nullable, "YES") && length.Valid && length.Int64 >= 18
 	default:
 		return false
 	}
