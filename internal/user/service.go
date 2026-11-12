@@ -192,6 +192,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 		Patronymic: nullable.StringPtr(&req.Patronymic),
 		Username:   req.Username,
 		Nickname:   nullable.StringPtr(&req.Nickname),
+		Phone:      phoneForCreate(req.Phone),
 		GenderID:   req.GenderID,
 		Birthday:   req.Birthday,
 		Password:   password,
@@ -246,6 +247,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Use
 		Patronymic: nullable.StringPtr(req.Patronymic),
 		Username:   nullable.StringPtr(req.Username),
 		Nickname:   nullable.StringPtr(req.Nickname),
+		Phone:      nullable.StringPtr(req.Phone),
 		Birthday:   nullable.TimePtr(req.Birthday),
 		Status:     nullableStatusPtr(req.Status),
 		GenderID:   nullable.StringPtr(req.GenderID),
@@ -536,4 +538,11 @@ func uniqueStrings(in []string) []string {
 		out = append(out, v)
 	}
 	return out
+}
+
+func phoneForCreate(phone *string) sql.NullString {
+	if phone == nil {
+		return sql.NullString{}
+	}
+	return nullable.String(*phone)
 }

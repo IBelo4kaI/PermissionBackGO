@@ -9,6 +9,7 @@ var (
 	ErrPasswordRequired = errors.New("пароль обязателен")
 	ErrBirthdayRequired = errors.New("дата рождения обязательна")
 	ErrGenderRequired   = errors.New("gender_id обязателен")
+	ErrPhoneTooLong     = errors.New("телефон не должен превышать 32 символа")
 	ErrNicknameTooLong  = errors.New("псевдоним не должен превышать 100 символов")
 
 	ErrNotFound = errors.New("пользователь не найден")

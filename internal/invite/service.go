@@ -221,6 +221,7 @@ func (s *Service) Accept(ctx context.Context, req AcceptRequest) (user.UserRespo
 		Patronymic: req.Patronymic,
 		Username:   req.Username,
 		Nickname:   req.Nickname,
+		Phone:      &req.Phone,
 		Birthday:   req.Birthday,
 		GenderID:   req.GenderID,
 		Password:   req.Password,

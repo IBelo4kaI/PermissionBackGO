@@ -153,6 +153,10 @@ func (h *Handler) Update(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	if err := validatePhone(req.Phone); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+
 	user, err := h.service.Update(c.Context(), id, req)
 	if err != nil {
 		switch {

@@ -21,12 +21,22 @@ func (r CreateRequest) Validate() error {
 	if r.GenderID == "" {
 		return ErrGenderRequired
 	}
-	return validateNickname(&r.Nickname)
+	if err := validateNickname(&r.Nickname); err != nil {
+		return err
+	}
+	return validatePhone(r.Phone)
 }
 
 func validateNickname(n *string) error {
 	if n != nil && utf8.RuneCountInString(*n) > 100 {
 		return ErrNicknameTooLong
+	}
+	return nil
+}
+
+func validatePhone(p *string) error {
+	if p != nil && utf8.RuneCountInString(*p) > 32 {
+		return ErrPhoneTooLong
 	}
 	return nil
 }

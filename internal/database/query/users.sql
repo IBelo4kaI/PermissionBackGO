@@ -6,6 +6,7 @@ SELECT
 	patronymic,
 	username,
 	nickname,
+	phone,
 	gender_id,
 	birthday,
 	password,
@@ -24,6 +25,7 @@ SELECT
 	patronymic,
 	username,
 	nickname,
+	phone,
 	gender_id,
 	birthday,
 	password,
@@ -45,6 +47,7 @@ SELECT
 	patronymic,
 	username,
 	nickname,
+	phone,
 	gender_id,
 	birthday,
 	password,
@@ -110,6 +113,7 @@ SELECT
 	patronymic,
 	username,
 	nickname,
+	phone,
 	gender_id,
 	birthday,
 	password,
@@ -128,6 +132,7 @@ SELECT DISTINCT
 	u.patronymic,
 	u.username,
 	u.nickname,
+	u.phone,
 	u.gender_id,
 	u.birthday,
 	u.password,
@@ -197,9 +202,9 @@ WHERE
 
 -- name: CreateUser :exec
 INSERT INTO
-	users (id, name, surname, patronymic, username, nickname, gender_id, birthday, password, status, created_at)
+	users (id, name, surname, patronymic, username, nickname, phone, gender_id, birthday, password, status, created_at)
 VALUES
-	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: UpdateUser :exec
 -- Частичное обновление: sqlc.narg-поля, для которых передан NULL, остаются без изменений.
@@ -210,6 +215,7 @@ SET
 	patronymic = COALESCE(sqlc.narg ('patronymic'), patronymic),
 	username = COALESCE(sqlc.narg ('username'), username),
 	nickname = COALESCE(sqlc.narg ('nickname'), nickname),
+	phone = NULLIF(COALESCE(sqlc.narg ('phone'), phone), ''),
 	birthday = COALESCE(sqlc.narg ('birthday'), birthday),
 	status = COALESCE(sqlc.narg ('status'), status),
 	gender_id = COALESCE(sqlc.narg ('gender_id'), gender_id),

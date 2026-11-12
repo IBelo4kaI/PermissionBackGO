@@ -19,6 +19,7 @@ type UserResponse struct {
 	Patronymic *string             `json:"patronymic"`
 	Username   string              `json:"username"`
 	Nickname   *string             `json:"nickname"`
+	Phone      *string             `json:"phone"`
 	Birthday   time.Time           `json:"birthday"`
 	Status     repo.UsersStatus    `json:"status"`
 	CreatedAt  time.Time           `json:"created_at"`
@@ -33,6 +34,7 @@ type CreateRequest struct {
 	Patronymic string    `json:"patronymic"`
 	Username   string    `json:"username"`
 	Nickname   string    `json:"nickname"`
+	Phone      *string   `json:"phone"`
 	Birthday   time.Time `json:"birthday"`
 	GenderID   string    `json:"gender_id"`
 	Password   string    `json:"password"`
@@ -46,6 +48,7 @@ type UpdateRequest struct {
 	Patronymic *string    `json:"patronymic"`
 	Username   *string    `json:"username"`
 	Nickname   *string    `json:"nickname"`
+	Phone      *string    `json:"phone"`
 	Birthday   *time.Time `json:"birthday"`
 	Status     *string    `json:"status"`
 	GenderID   *string    `json:"gender_id"`
@@ -65,6 +68,7 @@ type UpdateUserRequest struct {
 	Patronymic *string    `json:"patronymic"`
 	Username   *string    `json:"username"`
 	Nickname   *string    `json:"nickname"`
+	Phone      *string    `json:"phone"`
 	Birthday   *time.Time `json:"birthday"`
 	Status     *string    `json:"status"`
 	GenderID   *string    `json:"gender_id"`
