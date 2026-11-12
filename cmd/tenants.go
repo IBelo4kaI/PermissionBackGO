@@ -17,12 +17,14 @@ import (
 )
 
 var tenantID = regexp.MustCompile(`^[A-Z][A-Z0-9_]*$`)
+var cookieNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 // TENANTS is an explicit allowlist. Forwarded host headers are deliberately ignored.
 func runTenants(base config, logger *log.Logger) error {
 	router := fiber.New()
 	handlers := map[string]*fiber.App{}
 	names := map[string]bool{}
+	cookieNames := map[string]bool{}
 	databases := map[string]bool{}
 	corporateDatabases := map[string]bool{}
 	for _, rawID := range strings.Split(os.Getenv("TENANTS"), ",") {
@@ -94,7 +96,14 @@ func runTenants(base config, logger *log.Logger) error {
 			return fmt.Errorf("tenant %s migrations: %w", id, err)
 		}
 		cfg := base
-		cfg.cookieName = "session_" + strings.ToLower(id)
+		cfg.cookieName = get("COOKIE_NAME")
+		if cfg.cookieName == "" {
+			cfg.cookieName = "session_" + strings.ToLower(id)
+		}
+		if !cookieNamePattern.MatchString(cfg.cookieName) || cookieNames[cfg.cookieName] {
+			return fmt.Errorf("tenant %s: invalid or duplicate COOKIE_NAME", id)
+		}
+		cookieNames[cfg.cookieName] = true
 		cfg.cookieDomain = domain
 		cfg.appBaseURL = baseURL
 		cfg.allowedOrigins = origins
