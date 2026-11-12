@@ -32,9 +32,14 @@ func runTenants(base config, logger *log.Logger) error {
 		}
 		names[id] = true
 		get := func(k string) string { return strings.TrimSpace(os.Getenv("TENANT_" + id + "_" + k)) }
-		host := strings.ToLower(get("HOST"))
-		if host == "" || strings.ContainsAny(host, "/: \t") || handlers[host] != nil {
-			return fmt.Errorf("tenant %s: invalid or duplicate HOST", id)
+		hosts, err := tenantHosts(get("HOST"), get("HOSTS"))
+		if err != nil {
+			return fmt.Errorf("tenant %s: %w", id, err)
+		}
+		for _, host := range hosts {
+			if handlers[host] != nil {
+				return fmt.Errorf("tenant %s: duplicate HOST %s", id, host)
+			}
 		}
 		dsn, corporate := get("DB_STRING"), get("CORPORATE_DB_STRING")
 		parsed, err := mysql.ParseDSN(dsn)
@@ -61,8 +66,10 @@ func runTenants(base config, logger *log.Logger) error {
 			return fmt.Errorf("tenant %s: invalid APP_BASE_URL", id)
 		}
 		domain := strings.TrimPrefix(strings.ToLower(get("COOKIE_DOMAIN")), ".")
-		if domain != "" && host != domain && !strings.HasSuffix(host, "."+domain) {
-			return fmt.Errorf("tenant %s: COOKIE_DOMAIN does not match HOST", id)
+		for _, host := range hosts {
+			if domain != "" && host != domain && !strings.HasSuffix(host, "."+domain) {
+				return fmt.Errorf("tenant %s: COOKIE_DOMAIN does not match HOST %s", id, host)
+			}
 		}
 		origins := []string{}
 		for _, origin := range strings.Split(get("ALLOWED_ORIGINS"), ",") {
@@ -92,7 +99,10 @@ func runTenants(base config, logger *log.Logger) error {
 		cfg.appBaseURL = baseURL
 		cfg.allowedOrigins = origins
 		app := application{config: cfg, db: db, corporateDB: corp, logger: logger}
-		handlers[host] = app.mount()
+		handler := app.mount()
+		for _, host := range hosts {
+			handlers[host] = handler
+		}
 	}
 	router.Use(func(c fiber.Ctx) error {
 		host := strings.ToLower(c.Get("Host"))
@@ -108,4 +118,25 @@ func runTenants(base config, logger *log.Logger) error {
 	})
 	logger.Info("multi-tenant mode: gRPC is disabled; HTTP tenants are selected by Host")
 	return router.Listen(base.addr)
+}
+
+// tenantHosts accepts the original single-host setting or a comma-separated list.
+func tenantHosts(host, hosts string) ([]string, error) {
+	if host != "" && hosts != "" {
+		return nil, fmt.Errorf("set HOST or HOSTS, not both")
+	}
+	if hosts == "" {
+		hosts = host
+	}
+	seen := map[string]bool{}
+	var result []string
+	for _, entry := range strings.Split(hosts, ",") {
+		h := strings.ToLower(strings.TrimSpace(entry))
+		if h == "" || strings.ContainsAny(h, "/: \t\r\n") || seen[h] {
+			return nil, fmt.Errorf("invalid or duplicate HOST %q", h)
+		}
+		seen[h] = true
+		result = append(result, h)
+	}
+	return result, nil
 }
