@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"permisson/internal/pkg/sessioncookie"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -42,7 +43,7 @@ func (h *Handler) Login(c fiber.Ctx) error {
 	}
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "session",
+		Name:     sessioncookie.Name(c),
 		Path:     "/",
 		HTTPOnly: true,
 		SameSite: "Lax",
@@ -56,7 +57,7 @@ func (h *Handler) Login(c fiber.Ctx) error {
 }
 
 func (h *Handler) ValidateSession(c fiber.Ctx) error {
-	sessionToken := c.Cookies("session")
+	sessionToken := c.Cookies(sessioncookie.Name(c))
 
 	valid, err := h.service.ValidateSession(c.Context(), sessionToken)
 	if err != nil {
@@ -67,7 +68,7 @@ func (h *Handler) ValidateSession(c fiber.Ctx) error {
 }
 
 func (h *Handler) SessionInfo(c fiber.Ctx) error {
-	info, err := h.service.SessionInfo(c.Context(), c.Cookies("session"))
+	info, err := h.service.SessionInfo(c.Context(), c.Cookies(sessioncookie.Name(c)))
 	if err != nil {
 		return sessionError(err)
 	}
@@ -83,18 +84,18 @@ func (h *Handler) ExtendSession(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
-	info, err := h.service.ExtendSession(c.Context(), c.Cookies("session"), req)
+	info, err := h.service.ExtendSession(c.Context(), c.Cookies(sessioncookie.Name(c)), req)
 	if err != nil {
 		return sessionError(err)
 	}
 
 	if !info.NeverExpires {
 		c.Cookie(&fiber.Cookie{
-			Name:     "session",
+			Name:     sessioncookie.Name(c),
 			Path:     "/",
 			HTTPOnly: true,
 			SameSite: "Lax",
-			Value:    c.Cookies("session"),
+			Value:    c.Cookies(sessioncookie.Name(c)),
 			Expires:  info.ExpiresAt,
 			Secure:   h.cookieSecure,
 			Domain:   h.cookieDomain,
@@ -117,7 +118,7 @@ func sessionError(err error) error {
 
 // Logout удаляет сессию пользователя и очищает cookie "session".
 func (h *Handler) Logout(c fiber.Ctx) error {
-	sessionToken := c.Cookies("session")
+	sessionToken := c.Cookies(sessioncookie.Name(c))
 
 	err := h.service.Logout(c.Context(), sessionToken)
 	if err != nil {
@@ -128,7 +129,7 @@ func (h *Handler) Logout(c fiber.Ctx) error {
 	}
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "session",
+		Name:     sessioncookie.Name(c),
 		Path:     "/",
 		HTTPOnly: true,
 		SameSite: "Lax",

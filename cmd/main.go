@@ -46,12 +46,20 @@ func main() {
 		sessionTTL:            sessionTTL,
 		appBaseURL:            env.GetAppBaseURL(),
 		settingsEncryptionKey: settingsEncryptionKey,
+		allowedOrigins:        []string{"http://localhost:5173", "http://localhost:8080"},
 	}
 
 	logger := log.NewWithOptions(os.Stdout, log.Options{
 		ReportTimestamp: true,
 		TimeFormat:      "15:04:05",
 	})
+
+	if os.Getenv("TENANTS") != "" {
+		if err := runTenants(cfg, logger); err != nil {
+			logger.Fatal(err)
+		}
+		return
+	}
 
 	db, err := sql.Open("mysql", cfg.db.dsn)
 	if err != nil {

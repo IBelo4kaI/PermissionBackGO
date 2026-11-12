@@ -8,6 +8,7 @@ import (
 	"permisson/internal/invite"
 	middlewares "permisson/internal/middleware"
 	"permisson/internal/permission"
+	"permisson/internal/pkg/sessioncookie"
 	"permisson/internal/role"
 	"permisson/internal/service"
 	"permisson/internal/settings"
@@ -40,6 +41,8 @@ type config struct {
 	sessionTTL            time.Duration
 	appBaseURL            string
 	settingsEncryptionKey []byte
+	cookieName            string
+	allowedOrigins        []string
 }
 
 type dbConfig struct {
@@ -49,8 +52,9 @@ type dbConfig struct {
 func (app *application) mount() *fiber.App {
 	fiberApp := fiber.New(fiber.Config{})
 
+	fiberApp.Use(func(c fiber.Ctx) error { sessioncookie.Set(c, app.config.cookieName); return c.Next() })
 	fiberApp.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:8080"},
+		AllowOrigins:     app.config.allowedOrigins,
 		AllowCredentials: true,
 	}))
 

@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"context"
+	"permisson/internal/pkg/sessioncookie"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -40,7 +41,7 @@ func NewRequire(authService SessionResolver, permService PermissionChecker) Requ
 // "perm:<entity>:<action>" с учётом всех wildcard-комбинаций.
 func RequirePermission(authService SessionResolver, permService PermissionChecker, entity, action string) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		callerInfo, err := authService.CallerFrom(c.Context(), c.Cookies("session"))
+		callerInfo, err := authService.CallerFrom(c.Context(), c.Cookies(sessioncookie.Name(c)))
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 		}

@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"permisson/internal/pkg/sessioncookie"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -74,7 +75,7 @@ func (h *Handler) Update(c fiber.Ctx) error {
 // Требует только пользовательскую сессию (не API-ключ), в отличие от
 // остальных роутов сущности.
 func (h *Handler) ListUserAccessible(c fiber.Ctx) error {
-	sessionToken := c.Cookies("session")
+	sessionToken := c.Cookies(sessioncookie.Name(c))
 
 	userID, err := h.auth.SessionUserID(c.Context(), sessionToken)
 	if err != nil {

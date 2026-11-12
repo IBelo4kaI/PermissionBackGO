@@ -2,6 +2,7 @@ package invite
 
 import (
 	"errors"
+	"permisson/internal/pkg/sessioncookie"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -29,7 +30,7 @@ func NewHandler(service *Service, authService *auth.Service, cookieSecure bool, 
 // schema/004_invites_created_by_nullable.sql) — специального разбора по
 // типу caller'а тут не нужно.
 func (h *Handler) Create(c fiber.Ctx) error {
-	callerInfo, err := h.auth.CallerFrom(c.Context(), c.Cookies("session"))
+	callerInfo, err := h.auth.CallerFrom(c.Context(), c.Cookies(sessioncookie.Name(c)))
 	if err != nil {
 		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	}
@@ -134,7 +135,7 @@ func (h *Handler) Accept(c fiber.Ctx) error {
 	}
 
 	c.Cookie(&fiber.Cookie{
-		Name:     "session",
+		Name:     sessioncookie.Name(c),
 		Path:     "/",
 		HTTPOnly: true,
 		SameSite: "Lax",

@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"permisson/internal/pkg/sessioncookie"
 
 	"github.com/gofiber/fiber/v3"
 
@@ -70,7 +71,7 @@ func (h *Handler) ListAll(c fiber.Ctx) error {
 
 // Требует только пользовательскую сессию (не API-ключ), как в Python-версии.
 func (h *Handler) Me(c fiber.Ctx) error {
-	sessionToken := c.Cookies("session")
+	sessionToken := c.Cookies(sessioncookie.Name(c))
 
 	userID, err := h.auth.SessionUserID(c.Context(), sessionToken)
 	if err != nil {
@@ -88,7 +89,7 @@ func (h *Handler) Me(c fiber.Ctx) error {
 }
 
 func (h *Handler) MePermissions(c fiber.Ctx) error {
-	sessionToken := c.Cookies("session")
+	sessionToken := c.Cookies(sessioncookie.Name(c))
 
 	userID, err := h.auth.SessionUserID(c.Context(), sessionToken)
 	if err != nil {
