@@ -34,6 +34,19 @@ func RunMigrations(ctx context.Context, db *sql.DB) error {
 		if applied[name] {
 			continue
 		}
+		if name == "schema/006_user_phone.sql" {
+			exists, err := existingPhoneColumn(ctx, db)
+			if err != nil {
+				return fmt.Errorf("migration %s: %w", name, err)
+			}
+			if exists {
+				if _, err := db.ExecContext(ctx, `INSERT INTO schema_migrations (name) VALUES (?)`, name); err != nil {
+					return fmt.Errorf("record migration %s: %w", name, err)
+				}
+				fmt.Printf("migration recorded (phone column already exists): %s\n", name)
+				continue
+			}
+		}
 		if err := applyFile(ctx, db, name); err != nil {
 			return fmt.Errorf("migration %s: %w", name, err)
 		}
@@ -140,4 +153,30 @@ func splitStatements(content string) []string {
 	}
 
 	return stmts
+}
+
+// An existing installation may already have users.phone outside the migration history.
+func existingPhoneColumn(ctx context.Context, db *sql.DB) (bool, error) {
+	var dataType, nullable string
+	var length sql.NullInt64
+	err := db.QueryRowContext(ctx, `SELECT DATA_TYPE, IS_NULLABLE, CHARACTER_MAXIMUM_LENGTH FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone'`).Scan(&dataType, &nullable, &length)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("inspect users.phone: %w", err)
+	}
+	if !compatiblePhoneColumn(dataType, nullable, length) {
+		return false, fmt.Errorf("existing users.phone is incompatible: type %s, nullable %s, length %v; expected a nullable string column of at least 32 characters", dataType, nullable, length)
+	}
+	return true, nil
+}
+
+func compatiblePhoneColumn(dataType, nullable string, length sql.NullInt64) bool {
+	switch strings.ToLower(dataType) {
+	case "char", "varchar", "tinytext", "text", "mediumtext", "longtext":
+		return strings.EqualFold(nullable, "YES") && length.Valid && length.Int64 >= 32
+	default:
+		return false
+	}
 }
