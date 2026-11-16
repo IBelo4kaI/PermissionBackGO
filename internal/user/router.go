@@ -73,6 +73,13 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 		}))
 
 	ftonic.For[UserIDRequest, DeleteResponse](schema).
+		DELETE(group, "/:user_id/sessions", require("users.sessions", "delete"), h.DeleteSessions, ftonic.WithOperation(docs.OperationObject{
+			Summary:     "Завершить все сессии пользователя",
+			Description: "Требует users.sessions:delete. Завершает сессии на всех устройствах.",
+			Tags:        []string{"Пользователи"},
+		}))
+
+	ftonic.For[UserIDRequest, DeleteResponse](schema).
 		DELETE(group, "/:user_id", require("users", "delete"), h.Delete, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Удалить пользователя",
 			Description: "Требует users:delete.",

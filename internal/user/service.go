@@ -283,6 +283,17 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Use
 	return s.GetByID(ctx, id)
 }
 
+// DeleteSessions завершает все сессии существующего пользователя текущего tenant.
+func (s *Service) DeleteSessions(ctx context.Context, id string) error {
+	if _, err := s.queries.GetUserByID(ctx, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	}
+	return s.queries.DeleteSessionsByUserID(ctx, id)
+}
+
 func (s *Service) Delete(ctx context.Context, id string) error {
 	if _, err := s.GetByID(ctx, id); err != nil {
 		return err

@@ -179,6 +179,16 @@ func (h *Handler) Update(c fiber.Ctx) error {
 	return c.JSON(user)
 }
 
+func (h *Handler) DeleteSessions(c fiber.Ctx) error {
+	if err := h.service.DeleteSessions(c.Context(), c.Params("user_id")); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+	return c.JSON(DeleteResponse{Message: "Все сессии пользователя завершены"})
+}
+
 func (h *Handler) Delete(c fiber.Ctx) error {
 	id := c.Params("user_id")
 
