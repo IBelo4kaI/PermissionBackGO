@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+	"time"
 
 	repo "permisson/internal/database/sqlc"
 )
@@ -19,8 +20,8 @@ type sessionQueries struct {
 func (q *sessionQueries) GetUserByID(_ context.Context, _ string) (repo.GetUserByIDRow, error) {
 	return repo.GetUserByIDRow{}, q.lookupErr
 }
-func (q *sessionQueries) DeleteSessionsByUserID(_ context.Context, id string) error {
-	q.deletedID = id
+func (q *sessionQueries) DeleteSessionsByUserIDBefore(_ context.Context, arg repo.DeleteSessionsByUserIDBeforeParams) error {
+	q.deletedID = arg.UserID
 	return q.deleteErr
 }
 
@@ -47,5 +48,17 @@ func TestDeleteSessions(t *testing.T) {
 				t.Fatalf("deleted ID = %q", q.deletedID)
 			}
 		})
+	}
+}
+
+func TestSessionExpiryCutoff(t *testing.T) {
+	for _, tc := range []struct{ now, want string }{
+		{"2026-11-16T12:00:00Z", "2026-11-17T21:00:00Z"},
+		{"2026-11-16T22:00:00Z", "2026-11-18T21:00:00Z"},
+	} {
+		now, _ := time.Parse(time.RFC3339, tc.now)
+		if got := sessionExpiryCutoff(now).Format(time.RFC3339); got != tc.want {
+			t.Errorf("cutoff for %s = %s, want %s", tc.now, got, tc.want)
+		}
 	}
 }

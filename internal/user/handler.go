@@ -186,7 +186,7 @@ func (h *Handler) DeleteSessions(c fiber.Ctx) error {
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
 	}
-	return c.JSON(DeleteResponse{Message: "Все сессии пользователя завершены"})
+	return c.JSON(DeleteResponse{Message: "Краткосрочные сессии пользователя завершены"})
 }
 
 func (h *Handler) Delete(c fiber.Ctx) error {

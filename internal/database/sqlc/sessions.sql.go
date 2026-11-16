@@ -119,3 +119,17 @@ func (q *Queries) UpdateSessionExpiresAt(ctx context.Context, arg UpdateSessionE
 	_, err := q.db.ExecContext(ctx, updateSessionExpiresAt, arg.ExpiresAt, arg.TokenHash)
 	return err
 }
+
+const deleteSessionsByUserIDBefore = `-- name: DeleteSessionsByUserIDBefore :exec
+DELETE FROM sessions WHERE user_id = ? AND expires_at < ?
+`
+
+type DeleteSessionsByUserIDBeforeParams struct {
+	UserID        string    `json:"userId"`
+	ExpiresBefore time.Time `json:"expiresBefore"`
+}
+
+func (q *Queries) DeleteSessionsByUserIDBefore(ctx context.Context, arg DeleteSessionsByUserIDBeforeParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSessionsByUserIDBefore, arg.UserID, arg.ExpiresBefore)
+	return err
+}

@@ -36,6 +36,7 @@ type Querier interface {
 	DeleteSessionByTokenHash(ctx context.Context, tokenHash string) error
 	// Нужно вызывать перед удалением пользователя (FK sessions.user_id -> users.id).
 	DeleteSessionsByUserID(ctx context.Context, userID string) error
+	DeleteSessionsByUserIDBefore(ctx context.Context, arg DeleteSessionsByUserIDBeforeParams) error
 	DeleteUser(ctx context.Context, id string) error
 	// Проверка наличия разрешения у пользователя с учётом всех wildcard-комбинаций
 	// сегментов "service:entity:action". Каждый sqlc.arg(...) используется несколько

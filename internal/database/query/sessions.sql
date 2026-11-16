@@ -40,3 +40,7 @@ WHERE
 DELETE FROM sessions
 WHERE
 	token_hash = ?;
+
+-- name: DeleteSessionsByUserIDBefore :exec
+DELETE FROM sessions
+WHERE user_id = sqlc.arg(user_id) AND expires_at < sqlc.arg(expires_before);

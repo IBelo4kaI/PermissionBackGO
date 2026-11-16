@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -283,7 +284,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Use
 	return s.GetByID(ctx, id)
 }
 
-// DeleteSessions завершает все сессии существующего пользователя текущего tenant.
+// DeleteSessions завершает сессии, истекающие до конца завтрашнего дня по Москве.
 func (s *Service) DeleteSessions(ctx context.Context, id string) error {
 	if _, err := s.queries.GetUserByID(ctx, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -291,7 +292,13 @@ func (s *Service) DeleteSessions(ctx context.Context, id string) error {
 		}
 		return err
 	}
-	return s.queries.DeleteSessionsByUserID(ctx, id)
+	return s.queries.DeleteSessionsByUserIDBefore(ctx, repo.DeleteSessionsByUserIDBeforeParams{UserID: id, ExpiresBefore: sessionExpiryCutoff(time.Now())})
+}
+
+func sessionExpiryCutoff(now time.Time) time.Time {
+	moscow := time.FixedZone("MSK", 3*60*60)
+	local := now.In(moscow)
+	return time.Date(local.Year(), local.Month(), local.Day()+2, 0, 0, 0, 0, moscow).UTC()
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {
