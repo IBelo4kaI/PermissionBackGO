@@ -13,24 +13,25 @@ import (
 // (GetUserByIDRow, ListUsersRow, ListAllUsersRow, ListUsersByServiceIDRow)
 // одинаковый набор колонок, но разные сгенерированные имена структур.
 type userRow struct {
-	ID         string
-	Name       string
-	Surname    string
-	Patronymic sql.NullString
-	Username   string
-	Nickname   sql.NullString
-	Phone      sql.NullString
-	GenderID   string
-	Birthday   time.Time
-	Password   string
-	Status     repo.UsersStatus
-	CreatedAt  time.Time
+	ID           string
+	Name         string
+	Surname      string
+	Patronymic   sql.NullString
+	Username     string
+	Nickname     sql.NullString
+	Phone        sql.NullString
+	UseTimetrack bool
+	GenderID     string
+	Birthday     time.Time
+	Password     string
+	Status       repo.UsersStatus
+	CreatedAt    time.Time
 }
 
 func fromGetUserRow(r repo.GetUserByIDRow) userRow {
 	return userRow{
 		ID: r.ID, Name: r.Name, Surname: r.Surname, Patronymic: r.Patronymic,
-		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, GenderID: r.GenderID, Birthday: r.Birthday,
+		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, UseTimetrack: r.UseTimetrack, GenderID: r.GenderID, Birthday: r.Birthday,
 		Password: r.Password, Status: r.Status, CreatedAt: r.CreatedAt,
 	}
 }
@@ -38,7 +39,7 @@ func fromGetUserRow(r repo.GetUserByIDRow) userRow {
 func fromListUsersRow(r repo.ListUsersRow) userRow {
 	return userRow{
 		ID: r.ID, Name: r.Name, Surname: r.Surname, Patronymic: r.Patronymic,
-		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, GenderID: r.GenderID, Birthday: r.Birthday,
+		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, UseTimetrack: r.UseTimetrack, GenderID: r.GenderID, Birthday: r.Birthday,
 		Password: r.Password, Status: r.Status, CreatedAt: r.CreatedAt,
 	}
 }
@@ -46,7 +47,7 @@ func fromListUsersRow(r repo.ListUsersRow) userRow {
 func fromListAllUsersRow(r repo.ListAllUsersRow) userRow {
 	return userRow{
 		ID: r.ID, Name: r.Name, Surname: r.Surname, Patronymic: r.Patronymic,
-		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, GenderID: r.GenderID, Birthday: r.Birthday,
+		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, UseTimetrack: r.UseTimetrack, GenderID: r.GenderID, Birthday: r.Birthday,
 		Password: r.Password, Status: r.Status, CreatedAt: r.CreatedAt,
 	}
 }
@@ -54,7 +55,7 @@ func fromListAllUsersRow(r repo.ListAllUsersRow) userRow {
 func fromListUsersByServiceIDRow(r repo.ListUsersByServiceIDRow) userRow {
 	return userRow{
 		ID: r.ID, Name: r.Name, Surname: r.Surname, Patronymic: r.Patronymic,
-		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, GenderID: r.GenderID, Birthday: r.Birthday,
+		Username: r.Username, Nickname: r.Nickname, Phone: r.Phone, UseTimetrack: r.UseTimetrack, GenderID: r.GenderID, Birthday: r.Birthday,
 		Password: r.Password, Status: r.Status, CreatedAt: r.CreatedAt,
 	}
 }
@@ -80,18 +81,19 @@ func fromUserRow(u userRow, gender repo.Gender, roles []repo.Role) UserResponse 
 	}
 
 	return UserResponse{
-		ID:         u.ID,
-		Name:       u.Name,
-		Surname:    u.Surname,
-		Patronymic: nullable.StringOrNil(u.Patronymic),
-		Username:   u.Username,
-		Nickname:   nullable.StringOrNil(u.Nickname),
-		Phone:      nullable.StringOrNil(u.Phone),
-		Birthday:   u.Birthday,
-		Status:     u.Status,
-		CreatedAt:  u.CreatedAt,
-		Gender:     gender,
-		Roles:      roleItems,
-		RolesCount: len(roleItems),
+		ID:           u.ID,
+		Name:         u.Name,
+		Surname:      u.Surname,
+		Patronymic:   nullable.StringOrNil(u.Patronymic),
+		Username:     u.Username,
+		Nickname:     nullable.StringOrNil(u.Nickname),
+		Phone:        nullable.StringOrNil(u.Phone),
+		UseTimetrack: u.UseTimetrack,
+		Birthday:     u.Birthday,
+		Status:       u.Status,
+		CreatedAt:    u.CreatedAt,
+		Gender:       gender,
+		Roles:        roleItems,
+		RolesCount:   len(roleItems),
 	}
 }

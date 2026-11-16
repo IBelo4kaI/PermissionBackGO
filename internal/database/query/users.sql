@@ -7,6 +7,7 @@ SELECT
 	username,
 	nickname,
 	phone,
+	use_timetrack,
 	gender_id,
 	birthday,
 	password,
@@ -26,6 +27,7 @@ SELECT
 	username,
 	nickname,
 	phone,
+	use_timetrack,
 	gender_id,
 	birthday,
 	password,
@@ -48,6 +50,7 @@ SELECT
 	username,
 	nickname,
 	phone,
+	use_timetrack,
 	gender_id,
 	birthday,
 	password,
@@ -56,12 +59,12 @@ SELECT
 FROM
 	users u
 WHERE
-	CAST(sqlc.narg (search) AS char) IS NULL
-	OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	CAST(sqlc.narg (search) AS char) is null
+	OR u.name like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.surname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.patronymic like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.username like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.nickname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 ORDER BY
 	CASE
 		WHEN CAST(sqlc.arg (sort_dir) AS char) = 'asc' THEN CASE CAST(sqlc.arg (sort_by) AS char)
@@ -98,12 +101,12 @@ SELECT
 FROM
 	users u
 WHERE
-	CAST(sqlc.narg (search) AS char) IS NULL
-	OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-	OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%');
+	CAST(sqlc.narg (search) AS char) is null
+	OR u.name like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.surname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.patronymic like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.username like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+	OR u.nickname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%');
 
 -- name: ListAllUsers :many
 SELECT
@@ -114,6 +117,7 @@ SELECT
 	username,
 	nickname,
 	phone,
+	use_timetrack,
 	gender_id,
 	birthday,
 	password,
@@ -133,6 +137,7 @@ SELECT DISTINCT
 	u.username,
 	u.nickname,
 	u.phone,
+	u.use_timetrack,
 	u.gender_id,
 	u.birthday,
 	u.password,
@@ -145,12 +150,12 @@ FROM
 WHERE
 	r.service_id = sqlc.arg (service_id)
 	AND (
-		CAST(sqlc.narg (search) AS char) IS NULL
-		OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		CAST(sqlc.narg (search) AS char) is null
+		OR u.name like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.surname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.patronymic like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.username like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.nickname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	)
 ORDER BY
 	CASE
@@ -192,19 +197,19 @@ FROM
 WHERE
 	r.service_id = sqlc.arg (service_id)
 	AND (
-		CAST(sqlc.narg (search) AS char) IS NULL
-		OR u.name LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.surname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.patronymic LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.username LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
-		OR u.nickname LIKE CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		CAST(sqlc.narg (search) AS char) is null
+		OR u.name like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.surname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.patronymic like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.username like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
+		OR u.nickname like CONCAT('%', CAST(sqlc.narg (search) AS char), '%')
 	);
 
 -- name: CreateUser :exec
 INSERT INTO
-	users (id, name, surname, patronymic, username, nickname, phone, gender_id, birthday, password, status, created_at)
+	users (id, name, surname, patronymic, username, nickname, phone, use_timetrack, gender_id, birthday, password, status, created_at)
 VALUES
-	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
+	(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW());
 
 -- name: UpdateUser :exec
 -- Частичное обновление: sqlc.narg-поля, для которых передан NULL, остаются без изменений.
@@ -216,6 +221,7 @@ SET
 	username = COALESCE(sqlc.narg ('username'), username),
 	nickname = COALESCE(sqlc.narg ('nickname'), nickname),
 	phone = NULLIF(COALESCE(sqlc.narg ('phone'), phone), ''),
+	use_timetrack = COALESCE(sqlc.narg ('use_timetrack'), use_timetrack),
 	birthday = COALESCE(sqlc.narg ('birthday'), birthday),
 	status = COALESCE(sqlc.narg ('status'), status),
 	gender_id = COALESCE(sqlc.narg ('gender_id'), gender_id),

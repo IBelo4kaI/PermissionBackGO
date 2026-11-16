@@ -97,16 +97,17 @@ type PersonSnapshot struct {
 // с ValidateResponse.Person — это то, что пользователь подтвердил/поправил в
 // форме, если нового человека создаём — просто исходные значения.
 type AcceptRequest struct {
-	Code       string    `uri:"code"`
-	Name       string    `json:"name"`
-	Surname    string    `json:"surname"`
-	Patronymic string    `json:"patronymic"`
-	Username   string    `json:"username"`
-	Nickname   string    `json:"nickname"`
-	Birthday   time.Time `json:"birthday"`
-	GenderID   string    `json:"gender_id"`
-	Password   string    `json:"password"`
-	Phone      string    `json:"phone"`
-	Email      string    `json:"email"`
-	RoleIDs    []string  `json:"role_ids" description:"Роли при регистрации; допускаются только роли с allow_registration"`
+	Code         string    `uri:"code"`
+	Name         string    `json:"name"`
+	Surname      string    `json:"surname"`
+	Patronymic   string    `json:"patronymic"`
+	Username     string    `json:"username"`
+	Nickname     string    `json:"nickname"`
+	UseTimetrack bool      `json:"use_timetrack" description:"Учитывать рабочее время в timetrack; по умолчанию false"`
+	Birthday     time.Time `json:"birthday"`
+	GenderID     string    `json:"gender_id"`
+	Password     string    `json:"password"`
+	Phone        string    `json:"phone"`
+	Email        string    `json:"email"`
+	RoleIDs      []string  `json:"role_ids" description:"Роли при регистрации; допускаются только роли с allow_registration"`
 }

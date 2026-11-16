@@ -69,6 +69,14 @@ func (h *Handler) ListAll(c fiber.Ctx) error {
 	return c.JSON(users)
 }
 
+func (h *Handler) ListTimetrack(c fiber.Ctx) error {
+	users, err := h.service.ListTimetrack(c.Context())
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Внутренняя ошибка")
+	}
+	return c.JSON(users)
+}
+
 // Требует только пользовательскую сессию (не API-ключ), как в Python-версии.
 func (h *Handler) Me(c fiber.Ctx) error {
 	sessionToken := c.Cookies(sessioncookie.Name(c))

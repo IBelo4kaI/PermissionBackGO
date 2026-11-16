@@ -140,6 +140,26 @@ func (s *Service) ListAll(ctx context.Context, search *string, sortBy, sortDir s
 	return items, nil
 }
 
+func (s *Service) ListTimetrack(ctx context.Context) ([]UserResponse, error) {
+	rows, err := s.queries.ListAllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]UserResponse, 0, len(rows))
+	for _, r := range rows {
+		if !r.UseTimetrack {
+			continue
+		}
+		resp, err := s.buildResponse(ctx, fromListAllUsersRow(r))
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, resp)
+	}
+	return items, nil
+}
+
 // GetByID — базовый метод: используется остальными операциями для проверки
 // существования пользователя и сборки ответа после мутации.
 func (s *Service) GetByID(ctx context.Context, id string) (UserResponse, error) {
@@ -186,17 +206,18 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (UserResponse, 
 
 	id := uuid.NewString()
 	err = s.queries.CreateUser(ctx, repo.CreateUserParams{
-		ID:         id,
-		Name:       req.Name,
-		Surname:    req.Surname,
-		Patronymic: nullable.StringPtr(&req.Patronymic),
-		Username:   req.Username,
-		Nickname:   nullable.StringPtr(&req.Nickname),
-		Phone:      phoneForCreate(req.Phone),
-		GenderID:   req.GenderID,
-		Birthday:   req.Birthday,
-		Password:   password,
-		Status:     repo.UsersStatusActive,
+		ID:           id,
+		Name:         req.Name,
+		Surname:      req.Surname,
+		Patronymic:   nullable.StringPtr(&req.Patronymic),
+		Username:     req.Username,
+		Nickname:     nullable.StringPtr(&req.Nickname),
+		Phone:        phoneForCreate(req.Phone),
+		UseTimetrack: req.UseTimetrack,
+		GenderID:     req.GenderID,
+		Birthday:     req.Birthday,
+		Password:     password,
+		Status:       repo.UsersStatusActive,
 	})
 	if err != nil {
 		return UserResponse{}, err
@@ -242,17 +263,18 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Use
 	}
 
 	err = s.queries.UpdateUser(ctx, repo.UpdateUserParams{
-		Name:       nullable.StringPtr(req.Name),
-		Surname:    nullable.StringPtr(req.Surname),
-		Patronymic: nullable.StringPtr(req.Patronymic),
-		Username:   nullable.StringPtr(req.Username),
-		Nickname:   nullable.StringPtr(req.Nickname),
-		Phone:      nullable.StringPtr(req.Phone),
-		Birthday:   nullable.TimePtr(req.Birthday),
-		Status:     nullableStatusPtr(req.Status),
-		GenderID:   nullable.StringPtr(req.GenderID),
-		Password:   password,
-		ID:         id,
+		Name:         nullable.StringPtr(req.Name),
+		Surname:      nullable.StringPtr(req.Surname),
+		Patronymic:   nullable.StringPtr(req.Patronymic),
+		Username:     nullable.StringPtr(req.Username),
+		Nickname:     nullable.StringPtr(req.Nickname),
+		Phone:        nullable.StringPtr(req.Phone),
+		UseTimetrack: nullable.BoolPtr(req.UseTimetrack),
+		Birthday:     nullable.TimePtr(req.Birthday),
+		Status:       nullableStatusPtr(req.Status),
+		GenderID:     nullable.StringPtr(req.GenderID),
+		Password:     password,
+		ID:           id,
 	})
 	if err != nil {
 		return UserResponse{}, err

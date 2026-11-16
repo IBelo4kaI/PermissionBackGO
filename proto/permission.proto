@@ -29,6 +29,7 @@ message UserResponse {
   string name = 2;
   string surname = 3;
   string nickname = 4;
+  bool use_timetrack = 5;
 }
 
 message GetUsersResponse {

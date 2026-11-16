@@ -12,8 +12,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 )
 
-// Статические пути (/service/:service_id, /all, /me, /me/permissions/:service_id)
-// регистрируются раньше /:user_id, иначе Fiber перехватит их параметром.
+// Статические пути регистрируются раньше /:user_id, иначе Fiber перехватит их параметром.
 func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, require middlewares.Require) {
 	group := router.Group("/users")
 
@@ -35,6 +34,13 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter, req
 		GET(group, "/all", require("users", "read_all"), h.ListAll, ftonic.WithOperation(docs.OperationObject{
 			Summary:     "Получить список пользователей без пагинации",
 			Description: "Требует users:read_all.",
+			Tags:        []string{"Пользователи"},
+		}))
+
+	ftonic.For[apidoc.Empty, []UserResponse](schema).
+		GET(group, "/timetrack", require("users", "read_all"), h.ListTimetrack, ftonic.WithOperation(docs.OperationObject{
+			Summary:     "Получить всех пользователей с учётом рабочего времени в timetrack",
+			Description: "Без пагинации. Только use_timetrack = true. Требует users:read_all.",
 			Tags:        []string{"Пользователи"},
 		}))
 

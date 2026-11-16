@@ -216,16 +216,17 @@ func (s *Service) Accept(ctx context.Context, req AcceptRequest) (user.UserRespo
 	}
 
 	createReq := user.CreateRequest{
-		Name:       req.Name,
-		Surname:    req.Surname,
-		Patronymic: req.Patronymic,
-		Username:   req.Username,
-		Nickname:   req.Nickname,
-		Phone:      &req.Phone,
-		Birthday:   req.Birthday,
-		GenderID:   req.GenderID,
-		Password:   req.Password,
-		RoleIDs:    req.RoleIDs,
+		Name:         req.Name,
+		Surname:      req.Surname,
+		Patronymic:   req.Patronymic,
+		Username:     req.Username,
+		Nickname:     req.Nickname,
+		Phone:        &req.Phone,
+		UseTimetrack: req.UseTimetrack,
+		Birthday:     req.Birthday,
+		GenderID:     req.GenderID,
+		Password:     req.Password,
+		RoleIDs:      req.RoleIDs,
 	}
 	if err := createReq.Validate(); err != nil {
 		return user.UserResponse{}, err

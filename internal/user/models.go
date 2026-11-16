@@ -13,46 +13,49 @@ import (
 // roles и roles_count повторяют Python-контракт: roles — полный RoleResponse,
 // roles_count вычисляется как len(roles).
 type UserResponse struct {
-	ID         string              `json:"id"`
-	Name       string              `json:"name"`
-	Surname    string              `json:"surname"`
-	Patronymic *string             `json:"patronymic"`
-	Username   string              `json:"username"`
-	Nickname   *string             `json:"nickname"`
-	Phone      *string             `json:"phone"`
-	Birthday   time.Time           `json:"birthday"`
-	Status     repo.UsersStatus    `json:"status"`
-	CreatedAt  time.Time           `json:"created_at"`
-	Gender     repo.Gender         `json:"gender"`
-	Roles      []role.RoleResponse `json:"roles"`
-	RolesCount int                 `json:"roles_count"`
+	ID           string              `json:"id"`
+	Name         string              `json:"name"`
+	Surname      string              `json:"surname"`
+	Patronymic   *string             `json:"patronymic"`
+	Username     string              `json:"username"`
+	Nickname     *string             `json:"nickname"`
+	Phone        *string             `json:"phone"`
+	UseTimetrack bool                `json:"use_timetrack"`
+	Birthday     time.Time           `json:"birthday"`
+	Status       repo.UsersStatus    `json:"status"`
+	CreatedAt    time.Time           `json:"created_at"`
+	Gender       repo.Gender         `json:"gender"`
+	Roles        []role.RoleResponse `json:"roles"`
+	RolesCount   int                 `json:"roles_count"`
 }
 
 type CreateRequest struct {
-	Name       string    `json:"name"`
-	Surname    string    `json:"surname"`
-	Patronymic string    `json:"patronymic"`
-	Username   string    `json:"username"`
-	Nickname   string    `json:"nickname"`
-	Phone      *string   `json:"phone"`
-	Birthday   time.Time `json:"birthday"`
-	GenderID   string    `json:"gender_id"`
-	Password   string    `json:"password"`
-	RoleIDs    []string  `json:"role_ids" description:"Роли при регистрации; допускаются только роли с allow_registration"`
+	Name         string    `json:"name"`
+	Surname      string    `json:"surname"`
+	Patronymic   string    `json:"patronymic"`
+	Username     string    `json:"username"`
+	Nickname     string    `json:"nickname"`
+	Phone        *string   `json:"phone"`
+	UseTimetrack bool      `json:"use_timetrack" description:"Учитывать рабочее время в timetrack; по умолчанию false"`
+	Birthday     time.Time `json:"birthday"`
+	GenderID     string    `json:"gender_id"`
+	Password     string    `json:"password"`
+	RoleIDs      []string  `json:"role_ids" description:"Роли при регистрации; допускаются только роли с allow_registration"`
 }
 
 // Все поля опциональны — частичное обновление (sqlc.narg + COALESCE).
 type UpdateRequest struct {
-	Name       *string    `json:"name"`
-	Surname    *string    `json:"surname"`
-	Patronymic *string    `json:"patronymic"`
-	Username   *string    `json:"username"`
-	Nickname   *string    `json:"nickname"`
-	Phone      *string    `json:"phone"`
-	Birthday   *time.Time `json:"birthday"`
-	Status     *string    `json:"status"`
-	GenderID   *string    `json:"gender_id"`
-	Password   *string    `json:"password"`
+	Name         *string    `json:"name"`
+	Surname      *string    `json:"surname"`
+	Patronymic   *string    `json:"patronymic"`
+	Username     *string    `json:"username"`
+	Nickname     *string    `json:"nickname"`
+	Phone        *string    `json:"phone"`
+	UseTimetrack *bool      `json:"use_timetrack"`
+	Birthday     *time.Time `json:"birthday"`
+	Status       *string    `json:"status"`
+	GenderID     *string    `json:"gender_id"`
+	Password     *string    `json:"password"`
 }
 
 // UserIDRequest — ID пользователя в path-параметре :user_id.
@@ -62,17 +65,18 @@ type UserIDRequest struct {
 
 // UpdateUserRequest — как UpdateRequest, но с ID пользователя в path-параметре.
 type UpdateUserRequest struct {
-	UserID     string     `uri:"user_id"`
-	Name       *string    `json:"name"`
-	Surname    *string    `json:"surname"`
-	Patronymic *string    `json:"patronymic"`
-	Username   *string    `json:"username"`
-	Nickname   *string    `json:"nickname"`
-	Phone      *string    `json:"phone"`
-	Birthday   *time.Time `json:"birthday"`
-	Status     *string    `json:"status"`
-	GenderID   *string    `json:"gender_id"`
-	Password   *string    `json:"password"`
+	UserID       string     `uri:"user_id"`
+	Name         *string    `json:"name"`
+	Surname      *string    `json:"surname"`
+	Patronymic   *string    `json:"patronymic"`
+	Username     *string    `json:"username"`
+	Nickname     *string    `json:"nickname"`
+	Phone        *string    `json:"phone"`
+	UseTimetrack *bool      `json:"use_timetrack"`
+	Birthday     *time.Time `json:"birthday"`
+	Status       *string    `json:"status"`
+	GenderID     *string    `json:"gender_id"`
+	Password     *string    `json:"password"`
 }
 
 type RoleRequest struct {
