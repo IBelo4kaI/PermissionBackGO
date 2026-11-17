@@ -86,13 +86,9 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (LoginResult, err
 }
 
 func (s *Service) ValidateSession(ctx context.Context, rawToken string) (bool, error) {
-	if rawToken == "" {
-		return false, nil
-	}
-
-	_, err := s.queries.GetSessionByTokenHash(ctx, token.Hash(rawToken))
+	_, err := s.CallerFrom(ctx, rawToken)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, ErrSessionTokenMissing) || errors.Is(err, ErrInvalidSession) {
 			return false, nil
 		}
 		return false, err

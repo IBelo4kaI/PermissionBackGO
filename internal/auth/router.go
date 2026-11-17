@@ -19,7 +19,7 @@ func RegisterRoutes(router fiber.Router, h *Handler, schema *ftonic.Adapter) {
 
 	ftonic.For[any, ValidateSessionResponse](schema).
 		POST(group, "/validate-session", h.ValidateSession, ftonic.WithOperation(docs.OperationObject{
-			Summary: "Проверка токена на валидность",
+			Summary: "Проверка пользовательской сессии или API-ключа сервиса",
 			Tags:    []string{"Авторизация"},
 		}))
 
