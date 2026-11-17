@@ -43,4 +43,6 @@ WHERE
 
 -- name: DeleteSessionsByUserIDBefore :exec
 DELETE FROM sessions
-WHERE user_id = sqlc.arg(user_id) AND expires_at < sqlc.arg(expires_before);
+WHERE user_id = sqlc.arg(user_id)
+  AND expires_at >= sqlc.arg(expires_from)
+  AND expires_at < sqlc.arg(expires_before);

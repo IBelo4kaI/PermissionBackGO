@@ -284,7 +284,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (Use
 	return s.GetByID(ctx, id)
 }
 
-// DeleteSessions завершает сессии, истекающие до конца завтрашнего дня по Москве.
+// DeleteSessions завершает сессии, истекающие сегодня или завтра по Москве.
 func (s *Service) DeleteSessions(ctx context.Context, id string) error {
 	if _, err := s.queries.GetUserByID(ctx, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -292,13 +292,15 @@ func (s *Service) DeleteSessions(ctx context.Context, id string) error {
 		}
 		return err
 	}
-	return s.queries.DeleteSessionsByUserIDBefore(ctx, repo.DeleteSessionsByUserIDBeforeParams{UserID: id, ExpiresBefore: sessionExpiryCutoff(time.Now())})
+	from, before := sessionExpiryWindow(time.Now())
+	return s.queries.DeleteSessionsByUserIDBefore(ctx, repo.DeleteSessionsByUserIDBeforeParams{UserID: id, ExpiresFrom: from, ExpiresBefore: before})
 }
 
-func sessionExpiryCutoff(now time.Time) time.Time {
+func sessionExpiryWindow(now time.Time) (time.Time, time.Time) {
 	moscow := time.FixedZone("MSK", 3*60*60)
 	local := now.In(moscow)
-	return time.Date(local.Year(), local.Month(), local.Day()+2, 0, 0, 0, 0, moscow).UTC()
+	today := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, moscow)
+	return today.UTC(), today.AddDate(0, 0, 2).UTC()
 }
 
 func (s *Service) Delete(ctx context.Context, id string) error {

@@ -57,7 +57,8 @@ func TestSessionExpiryCutoff(t *testing.T) {
 		{"2026-11-16T22:00:00Z", "2026-11-18T21:00:00Z"},
 	} {
 		now, _ := time.Parse(time.RFC3339, tc.now)
-		if got := sessionExpiryCutoff(now).Format(time.RFC3339); got != tc.want {
+		_, before := sessionExpiryWindow(now)
+		if got := before.Format(time.RFC3339); got != tc.want {
 			t.Errorf("cutoff for %s = %s, want %s", tc.now, got, tc.want)
 		}
 	}
